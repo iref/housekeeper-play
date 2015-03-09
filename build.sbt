@@ -10,7 +10,7 @@ libraryDependencies ++= Seq(
   jdbc,
   cache,
   ws,
-  "com.typesafe.slick" %% "slick" % "",
+  "com.typesafe.slick" %% "slick" % "2.1.0",
   "com.typesafe.play" %% "play-slick" % "0.8.1",
   "org.specs2" %% "specs2-core" % "3.0.1" % "test"
 )
