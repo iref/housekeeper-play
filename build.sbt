@@ -8,7 +8,9 @@ scalaVersion := "2.11.1"
 
 libraryDependencies ++= Seq(
   jdbc,
-  anorm,
   cache,
-  ws
+  ws,
+  "com.typesafe.slick" %% "slick" % "",
+  "com.typesafe.play" %% "play-slick" % "0.8.1",
+  "org.specs2" %% "specs2-core" % "3.0.1" % "test"
 )
