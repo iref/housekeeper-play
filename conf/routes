@@ -3,7 +3,11 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Application.index
+GET        /                     controllers.Application.index
+
+# Sessions
+GET        /auth/callback        controllers.SessionController.signIn(code: String, state: String)
+GET        /auth                 controllers.SessionController.register
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET        /assets/*file         controllers.Assets.at(path="/public", file)
