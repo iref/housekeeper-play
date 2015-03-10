@@ -14,7 +14,10 @@ object ShoppingList {
   }
 
   val table = TableQuery[ShoppingListsTable]
+}
 
-  def all(implicit session: Session): List[ShoppingList] = table.list
+class ShoppingListRepository {
+
+  def all(implicit session: Session): List[ShoppingList] = ShoppingList.table.list
 
 }
