@@ -4,11 +4,12 @@ import models.User
 import org.specs2.mutable.Specification
 import play.api.Play.current
 import play.api.db.slick.Config.driver.simple._
-import repositories.UserRepository
 
 class UserRepositorySpec extends Specification with Database {
 
   val userA = User("Jan", "hacker@hacker.com", "1234")
+
+  val userRepository = new UserRepository
 
   "UserRepository" should {
 
@@ -17,7 +18,7 @@ class UserRepositorySpec extends Specification with Database {
       val userId = (User.table returning User.table.map(_.id)) += userA
 
       // when
-      val Some(found) = UserRepository.find(userId.get)
+      val Some(found) = userRepository.find(userId.get)
 
       // then
       found.id must beSome[Int]
@@ -32,7 +33,7 @@ class UserRepositorySpec extends Specification with Database {
       val nonexistentId: Int = 1
 
       // when
-      val notFound = UserRepository.find(nonexistentId)
+      val notFound = userRepository.find(nonexistentId)
 
       // then
       notFound must beNone
@@ -43,7 +44,7 @@ class UserRepositorySpec extends Specification with Database {
       User.table += userA
 
       // when
-      val Some(found) = UserRepository.findByGoogleId(userA.googleId)
+      val Some(found) = userRepository.findByGoogleId(userA.googleId)
 
       // then
       found.avatar must beEqualTo(userA.avatar)
@@ -58,7 +59,7 @@ class UserRepositorySpec extends Specification with Database {
       val googleId = "XXXX1234"
 
       // when
-      val notFound = UserRepository.findByGoogleId(googleId)
+      val notFound = userRepository.findByGoogleId(googleId)
 
       // then
       notFound must beNone
@@ -73,7 +74,7 @@ class UserRepositorySpec extends Specification with Database {
       User.table ++= users
 
       // when
-      val all = UserRepository.all
+      val all = userRepository.all
 
       // then
       all must have size(users.size)
@@ -84,7 +85,7 @@ class UserRepositorySpec extends Specification with Database {
       val newUser = User("NewUser", "newuser@example.com", "XX12345", Some("newuser.avatar.com"))
 
       // when
-      val Some(newUserId) = UserRepository.save(newUser)
+      val Some(newUserId) = userRepository.save(newUser)
 
       // then
       val Some(saved) = User.table.filter(_.id === newUserId).firstOption
@@ -99,7 +100,7 @@ class UserRepositorySpec extends Specification with Database {
       val userId = (User.table returning User.table.map(_.id)) += userA
 
       // when
-      UserRepository.remove(userId.get)
+      userRepository.remove(userId.get)
 
       // then
       User.table.filter(_.id === userId).firstOption must beNone
@@ -111,7 +112,7 @@ class UserRepositorySpec extends Specification with Database {
       val userCount = User.table.length.run
 
       // when
-      UserRepository.remove(userId)
+      userRepository.remove(userId)
 
       // then
       User.table.length.run must beEqualTo(userCount)

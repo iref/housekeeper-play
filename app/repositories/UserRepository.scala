@@ -6,7 +6,7 @@ import play.api.db.slick.Config.driver.simple._
 /**
  * Provides access to users data store.
  */
-object UserRepository {
+class UserRepository {
 
   def find(id: Int)(implicit s: Session): Option[User] =
     User.table.filter(_.id === id).firstOption
