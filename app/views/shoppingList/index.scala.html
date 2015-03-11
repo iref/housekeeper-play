@@ -1,0 +1,18 @@
+@(shoppingLists: List[ShoppingList])
+
+@main("Shopping Lists | Housekeeper") {
+    <div class="page-header">
+        <h1>Shopping Lists</h1>
+    </div>
+    <div>
+        @if(shoppingLists.isEmpty) {
+            <p class="text-muted">No shopping lists were created yet.</p>
+        } else {
+            <ul class="list-unstyled lead">
+                @shoppingLists.map { sl =>
+                    <li>@sl.title</li>
+                }
+            </ul>
+        }
+    </div>
+}
