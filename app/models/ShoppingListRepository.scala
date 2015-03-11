@@ -20,4 +20,6 @@ class ShoppingListRepository {
 
   def all(implicit session: Session): List[ShoppingList] = ShoppingList.table.list
 
+  def find(id: Int)(implicit session: Session): Option[(ShoppingList, Seq[ShoppingListItem])] = ???
+
 }
