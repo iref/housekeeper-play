@@ -63,5 +63,18 @@ class ShoppingListRepositorySpec extends Specification with Database {
       notFound should beNone
     }
 
+    "save new shopping list" in withDatabase { implicit session =>
+      // given
+      val newShoppingList = ShoppingList("New awesome list", "The most awesome shopping list")
+
+      // when
+      val stored = shoppingListRepository.save(newShoppingList)
+
+      // then
+      stored.id must not beNone
+      val found = ShoppingList.table.filter(_.id === stored.id).firstOption
+      found must beSome(stored)
+    }
+
   }
 }

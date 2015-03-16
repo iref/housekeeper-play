@@ -28,4 +28,11 @@ class ShoppingListRepository {
     list.map(sl => ShoppingListDetail(sl, items))
   }
 
+  def save(shoppingList: ShoppingList)(implicit session: Session): ShoppingList = {
+    val withIdQuery = (ShoppingList.table returning ShoppingList.table.map(_.id)).into { (_, id) =>
+      shoppingList.copy(id = id)
+    }
+    withIdQuery += shoppingList
+  }
+
 }
