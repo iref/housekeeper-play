@@ -43,21 +43,24 @@ class ShoppingListRepositorySpec extends Specification with Database {
       ShoppingListItem.table ++= items
 
       // when
-      val Some((sl, is)) = shoppingListRepository.find(shoppingListId.get)
+      val Some(sld) = shoppingListRepository.find(shoppingListId.get)
 
       // then
-      sl.id must beEqualTo(shoppingListId.get)
-      sl.title must beEqualTo(shoppingList.title)
-      sl.description must beEqualTo(shoppingList.description)
+      sld.shoppingList.id must beEqualTo(shoppingListId)
+      sld.shoppingList.title must beEqualTo(shoppingList.title)
+      sld.shoppingList.description must beEqualTo(shoppingList.description)
+      sld.items must have size(2)
+    }
 
-      is must beEqualTo(items)
-//      is.zip(items).foreach { case (actual, expected) =>
-//        actual.name must beEqualTo(expected.name)
-//        actual.quantity must beEqualTo(expected.quantity)
-//        actual.priceForOne must beEqualTo(expected.priceForOne)
-//        actual.shoppingListId must beEqualTo(shoppingListId)
-//        actual.id must beSome
-//      }
+    "find None for nonexistent shopping list id" in withDatabase { implicit session =>
+      // given
+      val shoppingListId = 1
+
+      // when
+      val notFound = shoppingListRepository.find(shoppingListId)
+
+      // then
+      notFound should beNone
     }
 
   }

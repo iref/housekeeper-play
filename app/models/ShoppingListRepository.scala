@@ -4,6 +4,8 @@ import play.api.db.slick.Config.driver.simple._
 
 case class ShoppingList(title: String, description: String, id: Option[Int] = None)
 
+case class ShoppingListDetail(shoppingList: ShoppingList, items: List[ShoppingListItem])
+
 object ShoppingList {
   class ShoppingListsTable(tag: Tag) extends Table[ShoppingList](tag, "shopping_lists") {
     def title = column[String]("title", O.NotNull)
@@ -20,6 +22,10 @@ class ShoppingListRepository {
 
   def all(implicit session: Session): List[ShoppingList] = ShoppingList.table.list
 
-  def find(id: Int)(implicit session: Session): Option[(ShoppingList, Seq[ShoppingListItem])] = ???
+  def find(id: Int)(implicit session: Session): Option[ShoppingListDetail] = {
+    val list = ShoppingList.table.filter(_.id === id).firstOption
+    val items = ShoppingListItem.table.filter(_.shoppingListId === id).list
+    list.map(sl => ShoppingListDetail(sl, items))
+  }
 
 }
