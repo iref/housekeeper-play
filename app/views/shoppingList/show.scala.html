@@ -1,0 +1,42 @@
+@(shoppingListDetail: Option[ShoppingListDetail])
+
+@main("Shopping List Detail | Housekeeper") {
+
+    @if(!shoppingListDetail.isDefined) {
+        <div>
+            <p class="text-warning">Shopping list was not found.</p>
+        </div>
+    } else {
+        @shoppingListDetail.map { sld =>
+            <div class="page-header">
+                <p>@sld.shoppingList.title</p>
+            </div>
+            <div>
+                <p>@sld.shoppingList.description</p>
+            </div>
+            <hl/>
+            <div>
+                <h2>Items</h2>
+                <table class="table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Quantity</th>
+                            <th>Price for one</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @sld.items.map { item =>
+                          <tr>
+                              <td>@item.name</td>
+                              <td>@item.quantity</td>
+                              <td>@item.priceForOne.map(_.toString).getOrElse("-")</td>
+                          </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+
+}
