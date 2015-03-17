@@ -12,6 +12,7 @@ libraryDependencies ++= Seq(
   ws,
   "org.webjars" %% "webjars-play" % "2.3.0-2",
   "org.webjars" % "bootstrap" % "3.1.1-2",
+  "com.adrianhurt" %% "play-bootstrap3" % "0.4",
   "com.softwaremill.macwire" %% "macros" % "0.8.0",
   "com.softwaremill.macwire" %% "runtime" % "0.8.0",
   "com.typesafe.slick" %% "slick" % "2.1.0",
