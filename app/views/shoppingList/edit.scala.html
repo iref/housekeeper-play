@@ -1,0 +1,16 @@
+@(shoppingListForm: Form[ShoppingListData])
+
+@implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
+
+@main("New Shopping List | Housekeeper") {
+    <div class="page-header">
+        <h1>New Shopping List</h1>
+    </div>
+    <div>
+        @b3.form(routes.ShoppingListController.save) {
+            @b3.text(shoppingListForm("title"), '_label -> "Title")
+            @b3.textarea(shoppingListForm("description"), '_label -> "Description")
+            @b3.submit('class -> "btn btn-primary") { Add }
+        }
+    </div>
+}

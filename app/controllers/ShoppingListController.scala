@@ -1,12 +1,22 @@
 package controllers
 
-import models.ShoppingListRepository
+import models.{ShoppingList, ShoppingListRepository}
 import play.api.Play.current
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick._
 import play.api.mvc.{Action, Controller}
 
+case class ShoppingListData(title: String, description: Option[String])
+
 class ShoppingListController(shoppingListRepository: ShoppingListRepository) extends Controller {
+
+  private val shoppingListForm = Form(
+    mapping(
+      "title" -> nonEmptyText,
+      "description" -> optional(text)
+    )(ShoppingListData.apply)(ShoppingListData.unapply))
 
   def index = DBAction { implicit rs =>
     val shoppingLists = shoppingListRepository.all
@@ -16,5 +26,24 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
   def show(id: Int) = DBAction { implicit rs =>
     val shoppingListDetail = shoppingListRepository.find(id)
     Ok(views.html.shoppingList.show(shoppingListDetail))
+  }
+
+  def newList() = Action {
+    Ok(views.html.shoppingList.edit(shoppingListForm))
+  }
+
+  def save() = DBAction { implicit rs =>
+    shoppingListForm.bindFromRequest.fold(
+      formWithErrors => BadRequest(views.html.shoppingList.edit(formWithErrors)),
+      shoppingListData => {
+        val shoppingList = ShoppingList(shoppingListData.title, shoppingListData.description)
+        val savedShoppingList = shoppingListRepository.save(shoppingList)
+        savedShoppingList.id.map { idVal =>
+          Redirect(routes.ShoppingListController.show(idVal))
+        }.getOrElse {
+          Redirect(routes.ShoppingListController.index()).flashing(("error" -> "Error while saving new shopping list"))
+        }
+      }
+    )
   }
 }

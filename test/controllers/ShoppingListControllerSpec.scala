@@ -40,8 +40,8 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
     "render all shopping lists" in new WithApplication {
       // given
       val shoppingLists = List(
-        ShoppingList("First list", "Newbie list", Some(1)),
-        ShoppingList("Second list", "My awesome list", Some(2)))
+        ShoppingList("First list", Some("Newbie list"), Some(1)),
+        ShoppingList("Second list", Some("My awesome list"), Some(2)))
       shoppingListRepository.all(any[Session]) returns shoppingLists
 
       // when
@@ -57,7 +57,7 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
     }
   }
 
-  "ShoppingList#show" should {
+  "ShoppingListController#show" should {
 
     "render shopping list detail template" in new WithApplication {
       // when
@@ -86,7 +86,7 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
     "render shopping list detail" in new WithApplication {
       // given
       val shoppingListDetail = ShoppingListDetail(
-        ShoppingList("First list", "Newbie list", Some(1)),
+        ShoppingList("First list", Some("Newbie list"), Some(1)),
         List(
           ShoppingListItem("Brewdog 5am Saint Red Ale", 1, None, Some(1), Some(1)),
           ShoppingListItem("Macbook Air 13", 1, Some(1000.0), Some(1), Some(2))
@@ -101,12 +101,53 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       status(result) must equalTo(OK)
       contentType(result) must beSome("text/html")
       contentAsString(result) must contain(shoppingListDetail.shoppingList.title)
-      contentAsString(result) must contain(shoppingListDetail.shoppingList.description)
+      contentAsString(result) must contain(shoppingListDetail.shoppingList.description.get)
       shoppingListDetail.items.foreach { item =>
         contentAsString(result) must contain(item.name)
         contentAsString(result) must contain(item.quantity.toString)
         contentAsString(result) must contain(item.priceForOne.map(_.toString).getOrElse("-"))
       }
+    }
+  }
+
+  "ShoppingListController#new" should {
+    "render edit template" in {
+      // when
+      val result = controller.newList()(FakeRequest())
+
+      // then
+      status(result) must equalTo(OK)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("New Shopping List")
+    }
+  }
+
+  "ShoppingListController#save" should {
+    "not save shopping list without title" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"))
+
+      // when
+      val result = controller.save()(request)
+
+      // then
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("div class=\"alert alert-danger\"")
+    }
+
+    "save valid shopping list" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"), ("title", "test"))
+      val expectedShoppingList = ShoppingList("test", Some("testdescription"))
+      shoppingListRepository.save(org.mockito.Matchers.eq(expectedShoppingList))(any[Session]) returns(expectedShoppingList.copy(id = Some(1)))
+
+      // when
+      val result = controller.save()(request)
+
+      // then
+      status(result) must equalTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
     }
   }
 }
