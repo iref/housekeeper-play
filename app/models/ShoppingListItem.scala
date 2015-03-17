@@ -7,7 +7,7 @@ case class ShoppingListItem(name: String, quantity: Int, priceForOne: Option[Big
 
 object ShoppingListItem {
   class ShoppingListItemTable(tag: Tag) extends Table[ShoppingListItem](tag, "shopping_list_items") {
-    def id = column[Option[Int]]("id", O.PrimaryKey)
+    def id = column[Option[Int]]("id", O.PrimaryKey, O.AutoInc)
     def name = column[String]("name", O.NotNull)
     def quantity = column[Int]("quantity", O.NotNull)
     def pricePerItem = column[Option[BigDecimal]]("price_for_one", O.Nullable)

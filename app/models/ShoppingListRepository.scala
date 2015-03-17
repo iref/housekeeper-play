@@ -29,10 +29,16 @@ class ShoppingListRepository {
   }
 
   def save(shoppingList: ShoppingList)(implicit session: Session): ShoppingList = {
-    val withIdQuery = (ShoppingList.table returning ShoppingList.table.map(_.id)).into { (_, id) =>
-      shoppingList.copy(id = id)
-    }
-    withIdQuery += shoppingList
+    val insertWithId = (ShoppingList.table returning ShoppingList.table.map(_.id))
+      .into((_, id) => shoppingList.copy(id = id))
+    insertWithId += shoppingList
+  }
+
+  def addItem(id: Int, item: ShoppingListItem)(implicit session: Session): ShoppingListItem = {
+    val withListId = item.copy(shoppingListId = Some(id))
+    val insertWithId = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id))
+      .into((_, id) => withListId.copy(id = id))
+    insertWithId += withListId
   }
 
 }
