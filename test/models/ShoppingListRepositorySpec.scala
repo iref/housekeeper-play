@@ -2,7 +2,6 @@ package models
 
 import org.specs2.mutable.Specification
 import play.api.db.slick.Config.driver.simple._
-import play.api.Play.current
 
 class ShoppingListRepositorySpec extends Specification with Database {
 
@@ -13,8 +12,8 @@ class ShoppingListRepositorySpec extends Specification with Database {
     "get all shopping lists" in withDatabase { implicit session =>
       // given
       ShoppingList.table ++= Seq(
-        ShoppingList("First shopping list", "My first awesome shopping list"),
-        ShoppingList("Second awesome list", "Even more awesome list")
+        ShoppingList("First shopping list", Some("My first awesome shopping list")),
+        ShoppingList("Second awesome list", Some("Even more awesome list"))
       )
 
       // when
@@ -34,7 +33,7 @@ class ShoppingListRepositorySpec extends Specification with Database {
 
     "get shopping list and its items by id" in withDatabase { implicit session =>
       // given
-      val shoppingList = ShoppingList("First shopping list", "My first awesome shopping list")
+      val shoppingList = ShoppingList("First shopping list", Some("My first awesome shopping list"))
       val shoppingListId = (ShoppingList.table returning ShoppingList.table.map(_.id)).insert(shoppingList)
 
       val items = Seq(
@@ -65,7 +64,7 @@ class ShoppingListRepositorySpec extends Specification with Database {
 
     "save new shopping list" in withDatabase { implicit session =>
       // given
-      val newShoppingList = ShoppingList("New awesome list", "The most awesome shopping list")
+      val newShoppingList = ShoppingList("New awesome list", Some("The most awesome shopping list"))
 
       // when
       val stored = shoppingListRepository.save(newShoppingList)

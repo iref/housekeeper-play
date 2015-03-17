@@ -2,14 +2,14 @@ package models
 
 import play.api.db.slick.Config.driver.simple._
 
-case class ShoppingList(title: String, description: String, id: Option[Int] = None)
+case class ShoppingList(title: String, description: Option[String] = None, id: Option[Int] = None)
 
 case class ShoppingListDetail(shoppingList: ShoppingList, items: List[ShoppingListItem])
 
 object ShoppingList {
   class ShoppingListsTable(tag: Tag) extends Table[ShoppingList](tag, "shopping_lists") {
     def title = column[String]("title", O.NotNull)
-    def description = column[String]("description", O.Nullable)
+    def description = column[Option[String]]("description", O.Nullable)
     def id = column[Option[Int]]("id", O.PrimaryKey, O.AutoInc)
 
     def * = (title, description, id) <> ((ShoppingList.apply _).tupled, ShoppingList.unapply)
