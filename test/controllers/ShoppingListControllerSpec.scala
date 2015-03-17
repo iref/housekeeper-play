@@ -60,9 +60,11 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
   "ShoppingListController#show" should {
 
     "render shopping list detail template" in new WithApplication {
+      // given
+      shoppingListRepository.find(any[Int])(any[Session]) returns(None)
+
       // when
       val result = controller.show(1)(FakeRequest())
-      shoppingListRepository.find(any[Int])(any[Session]) returns(None)
 
       // then
       status(result) must equalTo(OK)
@@ -133,7 +135,22 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       // then
       status(result) must equalTo(BAD_REQUEST)
       contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("div class=\"alert alert-danger\"")
+      contentAsString(result) must contain("span id=\"title_error")
+    }
+
+    "redirect with error message if saving fails" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
+      val newShoppingList = ShoppingList("Test", Some("Test description"))
+      shoppingListRepository.save(org.mockito.Matchers.eq(newShoppingList))(any[Session]) returns(newShoppingList)
+
+      // when
+      val result = controller.save()(request)
+
+      // then
+      status(result) must equalTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
+      flash(result).get("error") must beSome
     }
 
     "save valid shopping list" in {
@@ -148,6 +165,7 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       // then
       status(result) must equalTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
+      flash(result).get("error") must beNone
     }
   }
 }
