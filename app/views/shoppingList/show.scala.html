@@ -1,10 +1,12 @@
-@(shoppingListDetail: Option[ShoppingListDetail])
+@(shoppingListDetail: Option[ShoppingListDetail], listItemForm: Form[ShoppingListItemData])
+
+@implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
 @main("Shopping List Detail | Housekeeper") {
 
     @if(!shoppingListDetail.isDefined) {
-        <div>
-            <p class="text-warning">Shopping list was not found.</p>
+        <div class="alert alert-warning">
+            Shopping list was not found.
         </div>
     } else {
         @shoppingListDetail.map { sld =>
@@ -15,8 +17,26 @@
                 <p>@sld.shoppingList.description</p>
             </div>
             <hl/>
-            <div>
-                <h2>Items</h2>
+            <div class="items">
+                <h2>Items <a href="#" id="showItemForm"><i class="glyphicon glyphicon-plus">&nbsp;</i></a></h2>
+
+                <div id="itemFormContainer" class="row">
+                @b3.form(routes.ShoppingListController.addItem(sld.shoppingList.id.get)) {
+                    <div class="col-md-12">
+                       @b3.text(listItemForm("name"), '_label -> "Name", '_showIconOnError -> true)
+                    </div>
+                    <div class="col-md-6">
+                        @b3.number(listItemForm("quantity"), '_label -> "Quantity", 'min -> "1", '_showIconOnError -> true)
+                    </div>
+                    <div class="col-md-6">
+                    @b3.number(listItemForm("priceForOne"), '_label -> "Price for one", 'step -> "any", 'min -> "0", '_showIconOnError -> true)
+                    </div>
+                    <div class="col-md-12">
+                        @b3.submit('class -> "btn btn-default") { Add item }
+                    </div>
+                }
+                </div>
+                <hl/>
                 <table class="table table-striped">
                     <thead>
                         <tr>

@@ -25,3 +25,14 @@ body > .container {
 code {
     font-size: 80%;
 }
+
+div.items h2 a, div.items h2 a {
+    font-size: 15px;
+    color: #5cb85c;
+}
+
+div#itemFormContainer {
+    display: none;
+    padding: 3px;
+    margin-bottom: 5px;
+}

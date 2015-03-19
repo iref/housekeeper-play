@@ -2,6 +2,7 @@ package controllers
 
 import models.{ShoppingListItem, ShoppingListDetail, ShoppingList, ShoppingListRepository}
 import org.specs2.mock.Mockito
+import org.mockito.Matchers
 import play.api.db.DB
 import play.api.db.slick.Config.driver.simple._
 import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
@@ -10,6 +11,10 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
 
   val shoppingListRepository = mock[ShoppingListRepository]
   val controller = new ShoppingListController(shoppingListRepository)
+  val detail = ShoppingListDetail(
+    ShoppingList("Test list", Some("Test description"), Some(1)),
+    List()
+  )
 
   "ShoppingListController#index" should {
     "render shopping list template" in new WithApplication {
@@ -94,7 +99,7 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
           ShoppingListItem("Macbook Air 13", 1, Some(1000.0), Some(1), Some(2))
         )
       )
-      shoppingListRepository.find(org.mockito.Matchers.eq(1))(any[Session]) returns Some(shoppingListDetail)
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns Some(shoppingListDetail)
 
       // when
       val result = controller.show(1)(FakeRequest())
@@ -142,7 +147,7 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
       val newShoppingList = ShoppingList("Test", Some("Test description"))
-      shoppingListRepository.save(org.mockito.Matchers.eq(newShoppingList))(any[Session]) returns(newShoppingList)
+      shoppingListRepository.save(Matchers.eq(newShoppingList))(any[Session]) returns(newShoppingList)
 
       // when
       val result = controller.save()(request)
@@ -157,13 +162,101 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"), ("title", "test"))
       val expectedShoppingList = ShoppingList("test", Some("testdescription"))
-      shoppingListRepository.save(org.mockito.Matchers.eq(expectedShoppingList))(any[Session]) returns(expectedShoppingList.copy(id = Some(1)))
+      shoppingListRepository.save(Matchers.eq(expectedShoppingList))(any[Session]) returns(expectedShoppingList.copy(id = Some(1)))
 
       // when
       val result = controller.save()(request)
 
       // then
       status(result) must equalTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
+      flash(result).get("error") must beNone
+    }
+  }
+
+  "ShoppingListController#addItem" should {
+    "not save item without name" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("quantity", "1"))
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
+      // when
+      val result = controller.addItem(1)(request)
+
+      // then
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"name_error")
+    }
+
+    "not save item without quantity" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"))
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
+      // when
+      val result = controller.addItem(1)(request)
+
+      // then
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"quantity_error")
+    }
+
+    "not save item with negative quantity" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "-1"))
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
+      // when
+      val result = controller.addItem(1)(request)
+
+      // then
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"quantity_error")
+    }
+
+    "not save item with zero quantity" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "0"))
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
+      // when
+      val result = controller.addItem(1)(request)
+
+      // then
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"quantity_error")
+    }
+
+    "not save item with negative price" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "1"), ("priceForOne", "-1.0"))
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
+      // when
+      val result = controller.addItem(1)(request)
+
+      // then
+      status(result) must equalTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"priceForOne_error")
+    }
+
+    "save valid item" in {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "2"), ("priceForOne", "12.00"))
+      val expectedShoppingListItem = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
+      shoppingListRepository.addItem(Matchers.eq(1), Matchers.eq(expectedShoppingListItem))(any[Session]) returns
+        (expectedShoppingListItem.copy(id = Some(2)))
+
+      // when
+      val result = controller.addItem(1)(request)
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
       flash(result).get("error") must beNone
     }
