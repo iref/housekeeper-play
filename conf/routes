@@ -8,7 +8,7 @@ GET         /                                    controllers.Application.index
 # Shopping List resource
 GET         /shopping-lists/new                  @controllers.ShoppingListController.newList
 POST        /shopping-lists/:id/items/new        @controllers.ShoppingListController.addItem(id: Int)
-DELETE      /shopping-lists/:listId/items/:id    @controllers.ShoppingListController.removeItem(id: Int, listId: Int)
+GET         /shopping-lists/:listId/items/:id    @controllers.ShoppingListController.removeItem(id: Int, listId: Int)
 GET         /shopping-lists/:id                  @controllers.ShoppingListController.show(id: Int)
 POST        /shopping-lists                      @controllers.ShoppingListController.save
 GET         /shopping-lists                      @controllers.ShoppingListController.index

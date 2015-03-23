@@ -1,8 +1,12 @@
-@(shoppingListDetail: Option[ShoppingListDetail], listItemForm: Form[ShoppingListItemData])
+@(shoppingListDetail: Option[ShoppingListDetail], listItemForm: Form[ShoppingListItemData])(implicit flash: Flash)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
 @main("Shopping List Detail | Housekeeper") {
+
+    @flash.get("info").map { infoMsg =>
+        <div class="alert alert-info">@infoMsg</div>
+    }
 
     @if(!shoppingListDetail.isDefined) {
         <div class="alert alert-warning">
@@ -43,6 +47,7 @@
                             <th>Name</th>
                             <th>Quantity</th>
                             <th>Price for one</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,6 +56,12 @@
                               <td>@item.name</td>
                               <td>@item.quantity</td>
                               <td>@item.priceForOne.map(_.toString).getOrElse("-")</td>
+                              <td>
+                                  <a href="@routes.ShoppingListController.removeItem(item.id.get, item.shoppingListId.get)"
+                                     class="btn btn-danger pull-right">
+                                      <i class="glyphicon glyphicon-trash"> </i> Delete
+                                  </a>
+                              </td>
                           </tr>
                         }
                     </tbody>
