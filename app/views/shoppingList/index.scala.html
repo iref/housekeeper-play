@@ -8,11 +8,16 @@
         @if(shoppingLists.isEmpty) {
             <p class="text-muted">No shopping lists were created yet.</p>
         } else {
-            <ul class="list-unstyled lead">
+            <table class="table">
+                <tbody>
                 @shoppingLists.map { sl =>
-                    <li>@sl.title</li>
+                    <tr>
+                        <td><a href="@routes.ShoppingListController.show(sl.id.get)">@sl.title</a></td>
+                        <td>@sl.description.getOrElse("No description")</td>
+                    </tr>
                 }
-            </ul>
+                </tbody>
+            </table>
         }
     </div>
 }
