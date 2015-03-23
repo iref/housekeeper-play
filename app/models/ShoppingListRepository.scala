@@ -41,4 +41,8 @@ class ShoppingListRepository {
     insertWithId += withListId
   }
 
+  def removeItem(id: Int)(implicit session: Session): Unit = {
+    ShoppingListItem.table.filter(_.id === id).delete
+  }
+
 }

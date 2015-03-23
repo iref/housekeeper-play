@@ -100,5 +100,34 @@ class ShoppingListRepositorySpec extends Specification with Database {
       storedItem.shoppingListId must beSome(id)
     }
 
+    "remove item from list" in withDatabase { implicit session =>
+      // given
+      val id = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+      val item = ShoppingListItem("Super item", 1, Some(12.0), id)
+      val Some(itemId) = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id)) += item
+
+      // when
+      shoppingListRepository.removeItem(itemId)
+
+      // then
+      val Some(detail) = shoppingListRepository.find(id.get)
+      detail.items must beEmpty
+    }
+
+    "not remove any item if id does not exist" in withDatabase { implicit session =>
+      // given
+      val id = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+      val item = ShoppingListItem("Super item", 1, Some(12.0), id)
+      val Some(itemId) = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id)) += item
+
+      // when
+      shoppingListRepository.removeItem(itemId + 1)
+
+      // then
+      val Some(detail) = shoppingListRepository.find(id.get)
+      detail.items must have size(1)
+      detail.items must contain(item.copy(id = Some(itemId)))
+
+    }
   }
 }
