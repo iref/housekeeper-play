@@ -74,4 +74,9 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
       }
     )
   }
+
+  def removeItem(id: Int, listId: Int) = DBAction { implicit rs =>
+    shoppingListRepository.removeItem(id)
+    Redirect(routes.ShoppingListController.show(listId)).flashing(("info" -> "Item was deleted."))
+  }
 }

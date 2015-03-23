@@ -1,13 +1,14 @@
 package controllers
 
 import models.{ShoppingListItem, ShoppingListDetail, ShoppingList, ShoppingListRepository}
-import org.specs2.mock.Mockito
 import org.mockito.Matchers
+import org.specs2.mock.Mockito
+import org.specs2.specification.BeforeEach
 import play.api.db.DB
 import play.api.db.slick.Config.driver.simple._
 import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 
-class ShoppingListControllerSpec extends PlaySpecification with Mockito {
+class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with Mockito {
 
   val shoppingListRepository = mock[ShoppingListRepository]
   val controller = new ShoppingListController(shoppingListRepository)
@@ -15,6 +16,8 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
     ShoppingList("Test list", Some("Test description"), Some(1)),
     List()
   )
+
+  override def before: Any = org.mockito.Mockito.reset(shoppingListRepository)
 
   "ShoppingListController#index" should {
     "render shopping list template" in new WithApplication {
@@ -259,6 +262,26 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
       flash(result).get("error") must beNone
+    }
+  }
+
+  "ShoppingListController#removeItem" should {
+    "remove item from repository" in {
+      // when
+      controller.removeItem(1, 1)(FakeRequest())
+
+      // then
+      there was one(shoppingListRepository).removeItem(Matchers.eq(1))(any[Session])
+    }
+
+    "redirect to shopping list detail" in {
+      // when
+      val result = controller.removeItem(1, 1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
+      flash(result).get("info") must beSome
     }
   }
 }
