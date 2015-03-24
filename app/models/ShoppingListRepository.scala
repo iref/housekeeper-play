@@ -49,4 +49,8 @@ class ShoppingListRepository {
     ShoppingListItem.table.filter(_.id === item.id).update(item)
   }
 
+  def findItem(id: Int)(implicit session: Session): Option[ShoppingListItem] = {
+    ShoppingListItem.table.filter(_.id === id).firstOption
+  }
+
 }

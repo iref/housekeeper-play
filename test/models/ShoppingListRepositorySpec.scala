@@ -144,5 +144,35 @@ class ShoppingListRepositorySpec extends Specification with Database {
       detail.items must have size(1)
       detail.items must contain(updated)
     }
+
+    "find existing item by id" in withDatabase { implicit session =>
+      // given
+      val id = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+      val item = ShoppingListItem("Super item", 1, Some(12.0), id)
+      val Some(itemId) = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id)) += item
+
+      // when
+      val Some(found) = shoppingListRepository.findItem(itemId)
+
+      // then
+      found.id must beSome(itemId)
+      found.name must beEqualTo("Super item")
+      found.priceForOne must beSome(12.0)
+      found.quantity must beEqualTo(1)
+      found.shoppingListId must beEqualTo(id)
+    }
+
+    "return None if item with id does not exist" in withDatabase { implicit session =>
+      // given
+      val id = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+      val item = ShoppingListItem("Super item", 1, Some(12.0), id)
+      val Some(itemId) = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id)) += item
+
+      // when
+      val notFound = shoppingListRepository.findItem(Int.MaxValue)
+
+      // then
+      notFound must beNone
+    }
   }
 }
