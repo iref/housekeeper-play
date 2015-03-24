@@ -127,7 +127,22 @@ class ShoppingListRepositorySpec extends Specification with Database {
       val Some(detail) = shoppingListRepository.find(id.get)
       detail.items must have size(1)
       detail.items must contain(item.copy(id = Some(itemId)))
+    }
 
+    "edit existing item" in withDatabase { implicit session =>
+      // given
+      val id = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+      val item = ShoppingListItem("Super item", 1, Some(12.0), id)
+      val Some(itemId) = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id)) += item
+      val updated = item.copy(name = "Updated item name", quantity = 2, id = Some(itemId))
+
+      // when
+      shoppingListRepository.updateItem(updated)
+
+      // then
+      val Some(detail) = shoppingListRepository.find(itemId)
+      detail.items must have size(1)
+      detail.items must contain(updated)
     }
   }
 }

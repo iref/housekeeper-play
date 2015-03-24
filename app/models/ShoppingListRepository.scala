@@ -45,4 +45,8 @@ class ShoppingListRepository {
     ShoppingListItem.table.filter(_.id === id).delete
   }
 
+  def updateItem(item: ShoppingListItem)(implicit session: Session): Unit = {
+    ShoppingListItem.table.filter(_.id === item.id).update(item)
+  }
+
 }
