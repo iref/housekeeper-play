@@ -1,5 +1,5 @@
 import com.softwaremill.macwire.MacwireMacros._
-import controllers.ShoppingListController
+import controllers.{ShoppingListItemController, ShoppingListController}
 import models.Repositories
 
 /**
@@ -8,4 +8,6 @@ import models.Repositories
 object Bootstrap extends Repositories {
 
   lazy val shoppingListController = wire[ShoppingListController]
+
+  lazy val shoppingListItemController = wire[ShoppingListItemController]
 }

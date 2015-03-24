@@ -1,4 +1,4 @@
-@(shoppingListDetail: Option[ShoppingListDetail], listItemForm: Form[ShoppingListItemData])(implicit flash: Flash)
+@(shoppingListDetail: Option[ShoppingListDetail], listItemForm: Form[ShoppingListItemController.FormData])(implicit flash: Flash)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
@@ -25,7 +25,7 @@
                 <h2>Items <a href="#" id="showItemForm"><i class="glyphicon glyphicon-plus">&nbsp;</i></a></h2>
 
                 <div id="itemFormContainer" class="row">
-                @b3.form(routes.ShoppingListController.addItem(sld.shoppingList.id.get)) {
+                @b3.form(routes.ShoppingListItemController.addItem(sld.shoppingList.id.get)) {
                     <div class="col-md-12">
                        @b3.text(listItemForm("name"), '_label -> "Name", '_showIconOnError -> true)
                     </div>
@@ -57,7 +57,7 @@
                               <td>@item.quantity</td>
                               <td>@item.priceForOne.map(_.toString).getOrElse("-")</td>
                               <td>
-                                  <a href="@routes.ShoppingListController.removeItem(item.id.get, item.shoppingListId.get)"
+                                  <a href="@routes.ShoppingListItemController.removeItem(item.id.get, item.shoppingListId.get)"
                                      class="btn btn-danger pull-right">
                                       <i class="glyphicon glyphicon-trash"> </i> Delete
                                   </a>

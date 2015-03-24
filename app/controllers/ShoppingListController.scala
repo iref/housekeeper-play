@@ -11,22 +11,9 @@ import play.api.mvc.{Action, Controller}
 
 case class ShoppingListData(title: String, description: Option[String])
 
-case class ShoppingListItemData(name: String, quantity: Int, priceForOne: Option[BigDecimal])
-
 class ShoppingListController(shoppingListRepository: ShoppingListRepository) extends Controller {
 
-  private val shoppingListForm = Form(
-    mapping(
-      "title" -> nonEmptyText,
-      "description" -> optional(text)
-    )(ShoppingListData.apply)(ShoppingListData.unapply))
-
-  private val listItemForm = Form(
-    mapping(
-      "name" -> nonEmptyText,
-      "quantity" -> number(min = 1),
-      "priceForOne" -> optional(bigDecimal(10, 2) verifying(min(BigDecimal(0))))
-    )(ShoppingListItemData.apply)(ShoppingListItemData.unapply))
+  import ShoppingListController._
 
   def index = DBAction { implicit rs =>
     val shoppingLists = shoppingListRepository.all
@@ -35,15 +22,15 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
 
   def show(id: Int) = DBAction { implicit rs =>
     val shoppingListDetail = shoppingListRepository.find(id)
-    Ok(views.html.shoppingList.show(shoppingListDetail, listItemForm))
+    Ok(views.html.shoppingList.show(shoppingListDetail, ShoppingListItemController.form))
   }
 
   def newList() = Action {
-    Ok(views.html.shoppingList.edit(shoppingListForm))
+    Ok(views.html.shoppingList.edit(form))
   }
 
   def save() = DBAction { implicit rs =>
-    shoppingListForm.bindFromRequest.fold(
+    form.bindFromRequest.fold(
       formWithErrors => BadRequest(views.html.shoppingList.edit(formWithErrors)),
       shoppingListData => {
         val shoppingList = ShoppingList(shoppingListData.title, shoppingListData.description)
@@ -56,27 +43,14 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
       }
     )
   }
+}
 
-  def addItem(id: Int) = DBAction { implicit rs =>
-    listItemForm.bindFromRequest.fold(
-      formWithErrors => {
-        val shoppingList = shoppingListRepository.find(id)
-        BadRequest(views.html.shoppingList.show(shoppingList, formWithErrors))
-      },
-      listItem => {
-        val item = ShoppingListItem(listItem.name, listItem.quantity, listItem.priceForOne, Some(id))
-        val savedItem = shoppingListRepository.addItem(id, item)
-        savedItem.id.map { idVal =>
-          Redirect(routes.ShoppingListController.show(id))
-        } getOrElse {
-          Redirect(routes.ShoppingListController.show(id)).flashing(("error" -> "Error while saving new shopping item"))
-        }
-      }
-    )
-  }
+object ShoppingListController {
+  case class FormData(title: String, description: Option[String])
 
-  def removeItem(id: Int, listId: Int) = DBAction { implicit rs =>
-    shoppingListRepository.removeItem(id)
-    Redirect(routes.ShoppingListController.show(listId)).flashing(("info" -> "Item was deleted."))
-  }
+  private val form = Form(
+    mapping(
+      "title" -> nonEmptyText,
+      "description" -> optional(text)
+    )(FormData.apply)(FormData.unapply))
 }
