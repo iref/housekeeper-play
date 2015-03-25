@@ -25,7 +25,7 @@
                 <h2>Items <a href="#" id="showItemForm"><i class="glyphicon glyphicon-plus">&nbsp;</i></a></h2>
 
                 <div id="itemFormContainer" class="row">
-                @b3.form(routes.ShoppingListItemController.addItem(sld.shoppingList.id.get)) {
+                @b3.form(routes.ShoppingListItemController.save(sld.shoppingList.id.get)) {
                     <div class="col-md-12">
                        @b3.text(listItemForm("name"), '_label -> "Name", '_showIconOnError -> true)
                     </div>
@@ -57,7 +57,11 @@
                               <td>@item.quantity</td>
                               <td>@item.priceForOne.map(_.toString).getOrElse("-")</td>
                               <td>
-                                  <a href="@routes.ShoppingListItemController.removeItem(item.id.get, item.shoppingListId.get)"
+                                  <a href="@routes.ShoppingListItemController.edit(item.id.get, item.shoppingListId.get)"
+                                     class="btn btn-default pull-right">
+                                      <i class="glyphicon glyphicon-pencil"></i> Edit
+                                  </a>
+                                  <a href="@routes.ShoppingListItemController.remove(item.id.get, item.shoppingListId.get)"
                                      class="btn btn-danger pull-right">
                                       <i class="glyphicon glyphicon-trash"> </i> Delete
                                   </a>

@@ -23,7 +23,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
 
   override def before: Any = org.mockito.Mockito.reset(shoppingListRepository)
 
-  "ShoppingListController#save" should {
+  "#save" should {
     "not save item without name" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("quantity", "1"))
@@ -111,7 +111,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
     }
   }
 
-  "ShoppingListController#remove" should {
+  "#remove" should {
     "remove item from repository" in new WithApplication {
       // when
       controller.remove(1, 1)(FakeRequest())
@@ -131,18 +131,23 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
     }
   }
 
-  "ShoppingListController#edit" should {
+  "#edit" should {
     "render editItem template" in new WithApplication {
+      // given
+      val item = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
+      shoppingListRepository.findItem(Matchers.eq(1))(any[Session]) returns(Some(item))
+
       // when
       val result = controller.edit(1, 1)(FakeRequest())
 
       // then
       status(result) must beEqualTo(OK)
+      contentType(result) must beSome("text/html")
       contentAsString(result) must contain("Edit item")
     }
   }
 
-  "ShoppingListController#update" should {
+  "#update" should {
     "not update item without name" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("quantity" -> "2")
@@ -181,15 +186,34 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
 
     "not update item with negative price for one" in new WithApplication {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("name" -> "New title", "quantity" -> "1", "priceForOne" -> "12.00")
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> "New title", "quantity" -> "1", "priceForOne" -> "-12.00")
 
       // when
       val result = controller.update(1, 1)(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beEqualTo("text/html")
+      contentType(result) must beSome("text/html")
       contentAsString(result) must contain("span id=\"priceForOne_error")
+    }
+
+    "update existing item" in new WithApplication {
+      // given
+      val updated = ShoppingListItem("New title", 1, Some(12.00), Some(2), Some(1))
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> updated.name,
+        "quantity" -> updated.quantity.toString,
+        "priceForOne" -> updated.priceForOne.get.toString)
+      shoppingListRepository.find(Matchers.eq(2))(any[Session]) returns (Some(detail))
+
+      // when
+      val result = controller.update(1, 2)(request)
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.show(2).url)
+      flash(result).get("info") must beSome[String]
+
+      there was one(shoppingListRepository).updateItem(Matchers.eq(updated))(any[Session])
     }
   }
 

@@ -36,9 +36,24 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository)
     Redirect(routes.ShoppingListController.show(listId)).flashing(("info" -> "Item was deleted."))
   }
 
-  def edit(id: Int, listId: Int) = Action { NotImplemented }
+  def edit(id: Int, listId: Int) = DBAction { implicit rs =>
+    shoppingListRepository.findItem(id).map { item =>
+      val formData = FormData(name = item.name,
+        quantity = item.quantity, priceForOne = item.priceForOne)
+      Ok(views.html.shoppingListItem.edit(id, listId, form.fill(formData)))
+    }.get
+  }
 
-  def update(id: Int, listId: Int) = Action { NotImplemented }
+  def update(id: Int, listId: Int) = DBAction { implicit rs =>
+    ShoppingListItemController.form.bindFromRequest.fold(
+      formWithError => BadRequest(views.html.shoppingListItem.edit(id, listId, formWithError)),
+      listItem => {
+        val toUpdate = ShoppingListItem(listItem.name, listItem.quantity, listItem.priceForOne, Some(listId), Some(id))
+        shoppingListRepository.updateItem(toUpdate)
+        Redirect(routes.ShoppingListController.show(listId)).flashing("info" -> "Item was updated.")
+      }
+    )
+  }
 }
 
 object ShoppingListItemController {
