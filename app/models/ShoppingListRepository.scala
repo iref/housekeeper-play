@@ -34,23 +34,8 @@ class ShoppingListRepository {
     insertWithId += shoppingList
   }
 
-  def addItem(id: Int, item: ShoppingListItem)(implicit session: Session): ShoppingListItem = {
-    val withListId = item.copy(shoppingListId = Some(id))
-    val insertWithId = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id))
-      .into((_, id) => withListId.copy(id = id))
-    insertWithId += withListId
-  }
-
-  def removeItem(id: Int)(implicit session: Session): Unit = {
-    ShoppingListItem.table.filter(_.id === id).delete
-  }
-
-  def updateItem(item: ShoppingListItem)(implicit session: Session): Unit = {
-    ShoppingListItem.table.filter(_.id === item.id).update(item)
-  }
-
-  def findItem(id: Int)(implicit session: Session): Option[ShoppingListItem] = {
-    ShoppingListItem.table.filter(_.id === id).firstOption
+  def remove(id: Int)(implicit session: Session): Unit = {
+    ShoppingList.table.filter(_.id === id).delete
   }
 
 }

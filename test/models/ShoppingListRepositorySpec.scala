@@ -37,7 +37,7 @@ class ShoppingListRepositorySpec extends Specification with Database {
 
     "get shopping list and its items by id" in withDatabase { implicit session =>
       // given
-      val shoppingListId = (ShoppingList.table returning ShoppingList.table.map(_.id)).insert(shoppingListA)
+      val shoppingListId = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
 
       val items = Seq(
         ShoppingListItem("Macbook Pro 13'", 1, Some(1299.00), shoppingListId = shoppingListId),
@@ -76,6 +76,30 @@ class ShoppingListRepositorySpec extends Specification with Database {
       stored.id must not beNone
       val found = ShoppingList.table.filter(_.id === stored.id).firstOption
       found must beSome(stored)
+    }
+
+    "remove existing shopping list" in withDatabase { implicit session =>
+      // given
+      val Some(id) = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+
+      // when
+      shoppingListRepository.remove(id)
+
+      // then
+      val notFound = ShoppingList.table.filter(_.id === id).firstOption
+      notFound must beNone
+    }
+
+    "remove nonexistent list keeps every list in database" in withDatabase { implicit session =>
+      // given
+      (ShoppingList.table returning ShoppingList.table.map(_.id)) ++= shoppingLists
+
+      // when
+      shoppingListRepository.remove(Int.MaxValue)
+
+      // then
+      val allLists = ShoppingList.table.list
+      allLists must have size(2)
     }
   }
 }
