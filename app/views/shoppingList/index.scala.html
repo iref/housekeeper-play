@@ -1,6 +1,10 @@
-@(shoppingLists: List[ShoppingList])
+@(shoppingLists: List[ShoppingList])(implicit flash: Flash)
 
 @main("Shopping Lists | Housekeeper") {
+    @flash.get("info").map { info =>
+        <div class="alert alert-info">@info</div>
+    }
+
     <div class="page-header">
         <h1>Shopping Lists</h1>
     </div>

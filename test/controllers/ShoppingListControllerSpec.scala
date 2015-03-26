@@ -19,7 +19,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
 
   override def before: Any = org.mockito.Mockito.reset(shoppingListRepository)
 
-  "ShoppingListController#index" should {
+  "#index" should {
     "render shopping list template" in new WithApplication {
       // given
       shoppingListRepository.all(any[Session]) returns List()
@@ -65,7 +65,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
     }
   }
 
-  "ShoppingListController#show" should {
+  "#show" should {
 
     "render shopping list detail template" in new WithApplication {
       // given
@@ -120,7 +120,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
     }
   }
 
-  "ShoppingListController#new" should {
+  "#new" should {
     "render edit template" in {
       // when
       val result = controller.newList()(FakeRequest())
@@ -132,7 +132,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
     }
   }
 
-  "ShoppingListController#save" should {
+  "#save" should {
     "not save shopping list without title" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"))
@@ -174,6 +174,26 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       status(result) must equalTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
       flash(result).get("error") must beNone
+    }
+  }
+
+  "#delete" should {
+    "remove list from repository" in {
+      // when
+      controller.delete(1)(FakeRequest())
+
+      // then
+      there was one(shoppingListRepository).remove(Matchers.eq(1))(any[Session])
+    }
+
+    "redirect to shopping list index" in {
+      // when
+      val result = controller.delete(1)(FakeRequest())
+
+      // then
+      status(result) must equalTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
+      flash(result).get("info") must beSome
     }
   }
 

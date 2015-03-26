@@ -43,6 +43,11 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
       }
     )
   }
+
+  def delete(id: Int) = DBAction { implicit rs =>
+    shoppingListRepository.remove(id)
+    Redirect(routes.ShoppingListController.index()).flashing("info" -> "Shopping list was removed.")
+  }
 }
 
 object ShoppingListController {
