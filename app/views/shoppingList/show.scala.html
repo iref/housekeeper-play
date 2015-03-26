@@ -57,13 +57,13 @@
                               <td>@item.quantity</td>
                               <td>@item.priceForOne.map(_.toString).getOrElse("-")</td>
                               <td>
-                                  <a href="@routes.ShoppingListItemController.edit(item.id.get, item.shoppingListId.get)"
-                                     class="btn btn-default pull-right">
-                                      <i class="glyphicon glyphicon-pencil"></i> Edit
-                                  </a>
                                   <a href="@routes.ShoppingListItemController.remove(item.id.get, item.shoppingListId.get)"
-                                     class="btn btn-danger pull-right">
+                                     class="btn btn-danger pull-right action">
                                       <i class="glyphicon glyphicon-trash"> </i> Delete
+                                  </a>
+                                  <a href="@routes.ShoppingListItemController.edit(item.id.get, item.shoppingListId.get)"
+                                     class="btn btn-default pull-right action">
+                                      <i class="glyphicon glyphicon-pencil"></i> Edit
                                   </a>
                               </td>
                           </tr>

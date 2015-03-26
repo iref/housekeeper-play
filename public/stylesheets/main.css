@@ -36,3 +36,7 @@ div#itemFormContainer {
     padding: 3px;
     margin-bottom: 5px;
 }
+
+.action {
+    margin: 2px;
+}
