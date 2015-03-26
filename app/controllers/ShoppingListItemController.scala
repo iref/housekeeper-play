@@ -1,15 +1,16 @@
 package controllers
 
-import models.{ShoppingListItem, ShoppingListRepository}
+import models.{ShoppingListItemRepository, ShoppingListItem, ShoppingListRepository}
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick._
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.Controller
 
-class ShoppingListItemController(shoppingListRepository: ShoppingListRepository) extends Controller {
+class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
+                                 shoppingListItemRepository: ShoppingListItemRepository) extends Controller {
 
   import ShoppingListItemController._
 
@@ -21,7 +22,7 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository)
       },
       listItem => {
         val item = ShoppingListItem(listItem.name, listItem.quantity, listItem.priceForOne, Some(listId))
-        val savedItem = shoppingListRepository.addItem(listId, item)
+        val savedItem = shoppingListItemRepository.add(listId, item)
         savedItem.id.map { idVal =>
           Redirect(routes.ShoppingListController.show(listId))
         } getOrElse {
@@ -32,12 +33,12 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository)
   }
 
   def remove(id: Int, listId: Int) = DBAction { implicit rs =>
-    shoppingListRepository.removeItem(id)
+    shoppingListItemRepository.remove(id)
     Redirect(routes.ShoppingListController.show(listId)).flashing(("info" -> "Item was deleted."))
   }
 
   def edit(id: Int, listId: Int) = DBAction { implicit rs =>
-    shoppingListRepository.findItem(id).map { item =>
+    shoppingListItemRepository.find(id).map { item =>
       val formData = FormData(name = item.name,
         quantity = item.quantity, priceForOne = item.priceForOne)
       Ok(views.html.shoppingListItem.edit(id, listId, form.fill(formData)))
@@ -49,7 +50,7 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository)
       formWithError => BadRequest(views.html.shoppingListItem.edit(id, listId, formWithError)),
       listItem => {
         val toUpdate = ShoppingListItem(listItem.name, listItem.quantity, listItem.priceForOne, Some(listId), Some(id))
-        shoppingListRepository.updateItem(toUpdate)
+        shoppingListItemRepository.update(toUpdate)
         Redirect(routes.ShoppingListController.show(listId)).flashing("info" -> "Item was updated.")
       }
     )

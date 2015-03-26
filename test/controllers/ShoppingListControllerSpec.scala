@@ -133,7 +133,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "ShoppingListController#save" should {
-    "not save shopping list without title" in {
+    "not save shopping list without title" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"))
 
@@ -146,7 +146,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain("span id=\"title_error")
     }
 
-    "redirect with error message if saving fails" in {
+    "redirect with error message if saving fails" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
       val newShoppingList = ShoppingList("Test", Some("Test description"))
@@ -161,7 +161,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       flash(result).get("error") must beSome
     }
 
-    "save valid shopping list" in {
+    "save valid shopping list" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"), ("title", "test"))
       val expectedShoppingList = ShoppingList("test", Some("testdescription"))

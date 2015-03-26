@@ -1,27 +1,29 @@
 package controllers
 
-import models.{ShoppingList, ShoppingListDetail, ShoppingListItem, ShoppingListRepository}
+import models._
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.specification.BeforeEach
 import play.api.db.slick.Config.driver.simple._
-import play.api.test.{WithApplication, FakeRequest, PlaySpecification}
+import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 
 /**
  * Created by ferko on 24.3.15.
  */
 class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach with Mockito {
 
+  val shoppingListItemRepository = mock[ShoppingListItemRepository]
+
   val shoppingListRepository = mock[ShoppingListRepository]
 
-  val controller = new ShoppingListItemController(shoppingListRepository)
+  val controller = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository)
 
   val detail = ShoppingListDetail(
     ShoppingList("Test list", Some("Test description"), Some(1)),
     List()
   )
 
-  override def before: Any = org.mockito.Mockito.reset(shoppingListRepository)
+  override def before: Any = org.mockito.Mockito.reset(shoppingListItemRepository)
 
   "#save" should {
     "not save item without name" in new WithApplication {
@@ -98,7 +100,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "2"), ("priceForOne", "12.00"))
       val expectedShoppingListItem = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
-      shoppingListRepository.addItem(Matchers.eq(1), Matchers.eq(expectedShoppingListItem))(any[Session]) returns
+      shoppingListItemRepository.add(Matchers.eq(1), Matchers.eq(expectedShoppingListItem))(any[Session]) returns
         (expectedShoppingListItem.copy(id = Some(2)))
 
       // when
@@ -117,7 +119,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       controller.remove(1, 1)(FakeRequest())
 
       // then
-      there was one(shoppingListRepository).removeItem(Matchers.eq(1))(any[Session])
+      there was one(shoppingListItemRepository).remove(Matchers.eq(1))(any[Session])
     }
 
     "redirect to shopping list detail" in new WithApplication {
@@ -135,7 +137,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
     "render editItem template" in new WithApplication {
       // given
       val item = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
-      shoppingListRepository.findItem(Matchers.eq(1))(any[Session]) returns(Some(item))
+      shoppingListItemRepository.find(Matchers.eq(1))(any[Session]) returns(Some(item))
 
       // when
       val result = controller.edit(1, 1)(FakeRequest())
@@ -203,7 +205,6 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       val request = FakeRequest().withFormUrlEncodedBody("name" -> updated.name,
         "quantity" -> updated.quantity.toString,
         "priceForOne" -> updated.priceForOne.get.toString)
-      shoppingListRepository.find(Matchers.eq(2))(any[Session]) returns (Some(detail))
 
       // when
       val result = controller.update(1, 2)(request)
@@ -213,7 +214,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       redirectLocation(result) must beSome(routes.ShoppingListController.show(2).url)
       flash(result).get("info") must beSome[String]
 
-      there was one(shoppingListRepository).updateItem(Matchers.eq(updated))(any[Session])
+      there was one(shoppingListItemRepository).update(Matchers.eq(updated))(any[Session])
     }
   }
 

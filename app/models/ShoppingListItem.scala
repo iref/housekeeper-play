@@ -20,3 +20,25 @@ object ShoppingListItem {
 
   val table = TableQuery[ShoppingListItemTable]
 }
+
+class ShoppingListItemRepository {
+
+  def add(id: Int, item: ShoppingListItem)(implicit session: Session): ShoppingListItem = {
+    val withListId = item.copy(shoppingListId = Some(id))
+    val insertWithId = (ShoppingListItem.table returning ShoppingListItem.table.map(_.id))
+      .into((_, id) => withListId.copy(id = id))
+    insertWithId += withListId
+  }
+
+  def remove(id: Int)(implicit session: Session): Unit = {
+    ShoppingListItem.table.filter(_.id === id).delete
+  }
+
+  def update(item: ShoppingListItem)(implicit session: Session): Unit = {
+    ShoppingListItem.table.filter(_.id === item.id).update(item)
+  }
+
+  def find(id: Int)(implicit session: Session): Option[ShoppingListItem] = {
+    ShoppingListItem.table.filter(_.id === id).firstOption
+  }
+}

@@ -5,6 +5,8 @@ package models
  */
 trait Repositories {
 
-  lazy val userRepositories = new ShoppingListRepository()
+  lazy val shoppingListRepository = new ShoppingListRepository()
+  
+  lazy val shoppingListItemRepository = new ShoppingListItemRepository()
 
 }
