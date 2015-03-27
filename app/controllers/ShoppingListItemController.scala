@@ -26,7 +26,7 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
         savedItem.id.map { idVal =>
           Redirect(routes.ShoppingListController.show(listId))
         } getOrElse {
-          Redirect(routes.ShoppingListController.show(listId)).flashing(("error" -> "Error while saving new shopping item"))
+          Redirect(routes.ShoppingListController.show(listId)).flashing(("error" -> "Error while saving newList shopping item"))
         }
       }
     )

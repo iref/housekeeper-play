@@ -26,19 +26,19 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
   }
 
   def newList() = Action {
-    Ok(views.html.shoppingList.edit(form))
+    Ok(views.html.shoppingList.newList(form))
   }
 
   def save() = DBAction { implicit rs =>
     form.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.shoppingList.edit(formWithErrors)),
+      formWithErrors => BadRequest(views.html.shoppingList.newList(formWithErrors)),
       shoppingListData => {
         val shoppingList = ShoppingList(shoppingListData.title, shoppingListData.description)
         val savedShoppingList = shoppingListRepository.save(shoppingList)
         savedShoppingList.id.map { idVal =>
           Redirect(routes.ShoppingListController.show(idVal))
         } getOrElse {
-          Redirect(routes.ShoppingListController.index()).flashing(("error" -> "Error while saving new shopping list"))
+          Redirect(routes.ShoppingListController.index()).flashing("error" -> "Error while saving newList shopping list")
         }
       }
     )
@@ -47,6 +47,16 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
   def delete(id: Int) = DBAction { implicit rs =>
     shoppingListRepository.remove(id)
     Redirect(routes.ShoppingListController.index()).flashing("info" -> "Shopping list was removed.")
+  }
+
+  def edit(id: Int) = DBAction { implicit rs =>
+    val detail = shoppingListRepository.find(id)
+    detail.map{ d =>
+      val formData = FormData(d.shoppingList.title, d.shoppingList.description)
+      Ok(views.html.shoppingList.edit(id, form.fill(formData)))
+    } getOrElse {
+      Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist.")
+    }
   }
 }
 

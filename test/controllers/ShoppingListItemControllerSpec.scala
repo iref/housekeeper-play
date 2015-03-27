@@ -133,7 +133,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
     }
   }
 
-  "#edit" should {
+  "#newList" should {
     "render editItem template" in new WithApplication {
       // given
       val item = ShoppingListItem("Super title", 2, Some(12.00), Some(1))

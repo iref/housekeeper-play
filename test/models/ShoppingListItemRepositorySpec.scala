@@ -59,7 +59,7 @@ class ShoppingListItemRepositorySpec extends Specification with Database {
     storedItem must beEqualTo(storedItem)
   }
 
-  "edit existing item" in withDatabase { implicit session =>
+  "newList existing item" in withDatabase { implicit session =>
     // given
     val id = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingList
     val item = ShoppingListItem("Super item", 1, Some(12.0), id)

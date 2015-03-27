@@ -65,7 +65,7 @@ class ShoppingListRepositorySpec extends Specification with Database {
       notFound should beNone
     }
 
-    "save new shopping list" in withDatabase { implicit session =>
+    "save newList shopping list" in withDatabase { implicit session =>
       // given
       val newShoppingList = ShoppingList("New awesome list", Some("The most awesome shopping list"))
 

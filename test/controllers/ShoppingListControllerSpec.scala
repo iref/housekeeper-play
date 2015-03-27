@@ -120,8 +120,8 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
     }
   }
 
-  "#new" should {
-    "render edit template" in {
+  "#newList" should {
+    "render newList template" in {
       // when
       val result = controller.newList()(FakeRequest())
 
@@ -178,7 +178,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "#delete" should {
-    "remove list from repository" in {
+    "remove list from repository" in new WithApplication {
       // when
       controller.delete(1)(FakeRequest())
 
@@ -186,7 +186,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       there was one(shoppingListRepository).remove(Matchers.eq(1))(any[Session])
     }
 
-    "redirect to shopping list index" in {
+    "redirect to shopping list index" in new WithApplication {
       // when
       val result = controller.delete(1)(FakeRequest())
 
@@ -194,6 +194,42 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       status(result) must equalTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
       flash(result).get("info") must beSome
+    }
+  }
+
+  "#newList" should {
+    "render newList template" in new WithApplication {
+      // when
+      val result = controller.edit(1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(OK)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("Edit shopping list")
+    }
+
+    "retrieve shopping list from repository" in new WithApplication {
+      // given
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
+      // when
+      controller.edit(1)(FakeRequest())
+
+      // then
+      there was one(shoppingListRepository).find(Matchers.eq(1))(any[Session])
+    }
+
+    "redirect to shopping list index if list was not found" in new WithApplication {
+      // given
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(None)
+
+      // when
+      val result = controller.edit(1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
+      flash(result).get("error") must beSome
     }
   }
 
