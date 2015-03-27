@@ -101,5 +101,52 @@ class ShoppingListRepositorySpec extends Specification with Database {
       val allLists = ShoppingList.table.list
       allLists must have size(2)
     }
+
+    "update existing shopping list in database" in withDatabase { implicit session =>
+      // given
+      val Some(id) = (ShoppingList.table returning ShoppingList.table.map(_.id)) += shoppingListA
+      val toUpdate = ShoppingList("New test title", Some("Super duper updated description"), Some(id))
+
+      // when
+      shoppingListRepository.update(toUpdate)
+
+      // then
+      val updated = ShoppingList.table.filter(_.id === id).firstOption
+      updated must beSome(toUpdate)
+    }
+
+    "update does not update other shopping lists" in withDatabase { implicit session =>
+      //given
+      ShoppingList.table += shoppingListA
+      val toUpdate = ShoppingList("New title of nonexisting list", Some("New description of nonexisting list"), Some(Int.MaxValue))
+
+      // when
+      shoppingListRepository.update(toUpdate)
+
+      // then
+      val all = ShoppingList.table.list
+      all must have size(1)
+
+      val storedList = all.head
+      storedList.title must beEqualTo(shoppingListA.title)
+      storedList.description must beEqualTo(shoppingListA.description)
+    }
+
+    "not update shopping list without id" in withDatabase { implicit session =>
+      // given
+      ShoppingList.table += shoppingListA
+      val toUpdate = ShoppingList("New title of list without id", Some("New description of list without id"))
+
+      // when
+      shoppingListRepository.update(toUpdate)
+
+      // then
+      val all = ShoppingList.table.list
+      all must have size(1)
+
+      val storedList = all.head
+      storedList.title must beEqualTo(shoppingListA.title)
+      storedList.description must beEqualTo(shoppingListA.description)
+    }
   }
 }
