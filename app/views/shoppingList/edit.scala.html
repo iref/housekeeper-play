@@ -7,10 +7,10 @@
         <h1>Edit Shopping List</h1>
     </div>
     <div>
-   <!-- @b3.form(routes.ShoppingListController.save) {
+    @b3.form(routes.ShoppingListController.update(1)) {
         @b3.text(shoppingListForm("title"), '_label -> "Title")
         @b3.textarea(shoppingListForm("description"), '_label -> "Description")
         @b3.submit('class -> "btn btn-primary") { Add }
-    }-->
+    }
     </div>
 }

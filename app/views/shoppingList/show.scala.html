@@ -20,6 +20,9 @@
             <div>
                 <p>@sld.shoppingList.description</p>
                 <div class="pull-right">
+                    <a class="btn btn-default" href="@routes.ShoppingListController.edit(sld.shoppingList.id.get)">
+                        <i class="glyphicon glyphicon-pencil"> </i> Edit
+                    </a>
                     <a class="btn btn-danger" href="@routes.ShoppingListController.delete(sld.shoppingList.id.get)">
                         <i class="glyphicon glyphicon-trash"> </i> Delete
                     </a>

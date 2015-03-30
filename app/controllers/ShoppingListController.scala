@@ -58,6 +58,17 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
       Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist.")
     }
   }
+
+  def update(id: Int) = DBAction { implicit rs =>
+    form.bindFromRequest.fold(
+      formWithErrors => BadRequest(views.html.shoppingList.edit(1, formWithErrors)),
+      formData => {
+        val updatedShoppingList = ShoppingList(formData.title, formData.description, Some(id))
+        shoppingListRepository.update(updatedShoppingList)
+        Redirect(routes.ShoppingListController.show(id)).flashing("info" -> "Shopping list was updated.")
+      }
+    )
+  }
 }
 
 object ShoppingListController {

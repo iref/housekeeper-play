@@ -14,6 +14,8 @@ GET         /shopping-lists/:listId/items/:id/edit        @controllers.ShoppingL
 # Shopping List resource
 GET         /shopping-lists/new                           @controllers.ShoppingListController.newList
 GET         /shopping-lists/:id/delete                    @controllers.ShoppingListController.delete(id: Int)
+GET         /shopping-lists/:id/edit                      @controllers.ShoppingListController.edit(id: Int)
+POST        /shopping-lists/:id/edit                      @controllers.ShoppingListController.update(id: Int)
 GET         /shopping-lists/:id                           @controllers.ShoppingListController.show(id: Int)
 POST        /shopping-lists                               @controllers.ShoppingListController.save
 GET         /shopping-lists                               @controllers.ShoppingListController.index

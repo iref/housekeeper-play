@@ -197,8 +197,11 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
     }
   }
 
-  "#newList" should {
-    "render newList template" in new WithApplication {
+  "#edit" should {
+    "render edit template" in new WithApplication {
+      // given
+      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+
       // when
       val result = controller.edit(1)(FakeRequest())
 
@@ -206,17 +209,6 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       status(result) must beEqualTo(OK)
       contentType(result) must beSome("text/html")
       contentAsString(result) must contain("Edit shopping list")
-    }
-
-    "retrieve shopping list from repository" in new WithApplication {
-      // given
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
-
-      // when
-      controller.edit(1)(FakeRequest())
-
-      // then
-      there was one(shoppingListRepository).find(Matchers.eq(1))(any[Session])
     }
 
     "redirect to shopping list index if list was not found" in new WithApplication {
@@ -230,6 +222,35 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
       flash(result).get("error") must beSome
+    }
+  }
+
+  "#update" should {
+    "not update list without title" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("description" -> "New test description")
+
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"title_error")
+    }
+
+    "update existing list" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("title" -> "New updated title",
+        "description" -> "New update description")
+
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
+      flash(result).get("info") must beSome
     }
   }
 
