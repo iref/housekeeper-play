@@ -9,4 +9,6 @@ trait Repositories {
   
   lazy val shoppingListItemRepository = new ShoppingListItemRepository()
 
+  lazy val userRepository = new UserRepository()
+
 }
