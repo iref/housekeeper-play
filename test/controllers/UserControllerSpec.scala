@@ -103,8 +103,7 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
       contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"password_error")
-      contentAsString(result) must contain("span id=\"passwordConfirmation_error")
+      contentAsString(result) must contain("div class=\"alert alert-danger")
     }
 
     "creates valid user" in new WithApplication {

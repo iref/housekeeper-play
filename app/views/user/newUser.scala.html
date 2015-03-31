@@ -6,6 +6,9 @@
     <div class="page-header">
         <h1>Create new account</h1>
     </div>
+    @form.globalErrors.map{ msg =>
+      <div class="alert alert-danger">@msg</div>
+    }
     <div>
         @b3.form(routes.UserController.save()) {
             @b3.text(form("name"), '_label -> "Full Name")
