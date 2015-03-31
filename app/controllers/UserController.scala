@@ -26,6 +26,14 @@ class UserController(userRepository: UserRepository) extends Controller {
       }
     )
   }
+
+  def show(id: Int) = DBAction { implicit rs =>
+    userRepository.find(id).map { u =>
+      Ok(views.html.user.show(u))
+    } getOrElse {
+      Redirect(routes.Application.index()).flashing("error" -> "User profile does not exist.")
+    }
+  }
 }
 
 object UserController {

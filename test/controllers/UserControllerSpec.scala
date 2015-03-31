@@ -1,8 +1,10 @@
 package controllers
 
 import models.{User, UserRepository}
+import org.mockito.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.specification.BeforeEach
+import play.api.db.slick.Session
 import play.api.test.{FakeRequest, WithApplication, PlaySpecification}
 
 class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito {
@@ -118,6 +120,36 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
       status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.Application.index().url)
       flash(result).get("info") must beSome
+    }
+  }
+
+  "#show" should {
+
+    "render user detail template" in new WithApplication {
+      // given
+      userRepository.find(Matchers.eq(1))(any[Session]) returns(Some(userA.copy(id = Some(1))))
+
+      // when
+      val result = controller.show(1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(OK)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("User profile")
+      contentAsString(result) must contain(userA.name)
+    }
+
+    "redirect to index if user does not exists" in new WithApplication {
+      // given
+      userRepository.find(Matchers.eq(1))(any[Session]) returns(None)
+
+      // when
+      val result = controller.show(1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.Application.index().url)
+      flash(result).get("error") must beSome
     }
   }
 
