@@ -106,7 +106,7 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
       contentAsString(result) must contain("div class=\"alert alert-danger")
     }
 
-    "creates valid user" in new WithApplication {
+    "redirect to user detail after successful user creation" in new WithApplication {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("name" -> userA.name, "email" -> userA.email,
         "password" -> userA.password, "passwordConfirmation" -> userA.password)

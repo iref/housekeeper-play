@@ -1,6 +1,7 @@
 package controllers
 
 import models.{User, UserRepository}
+import org.mindrot.jbcrypt.BCrypt
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -19,7 +20,7 @@ class UserController(userRepository: UserRepository) extends Controller {
     form.bindFromRequest.fold(
       formWithErrors => BadRequest(views.html.user.newUser(formWithErrors)),
       data => {
-        val newUser = User(data.name, data.email, data.password)
+        val newUser = transform(data)
         val stored = userRepository.save(newUser)
         Redirect(routes.Application.index()).flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
       }
@@ -29,6 +30,11 @@ class UserController(userRepository: UserRepository) extends Controller {
 
 object UserController {
   case class FormData(name: String, email: String, password: String, passwordConfirmation: String)
+
+  def transform(data: FormData): User = {
+    val hashedPassword = BCrypt.hashpw(data.password, BCrypt.gensalt())
+    User(data.name, data.email, hashedPassword)
+  }
 
   val form = Form(
     mapping(
