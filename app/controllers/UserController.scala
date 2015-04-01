@@ -14,6 +14,13 @@ class UserController(userRepository: UserRepository) extends Controller {
 
   import UserController._
 
+  val loginForm = Form(
+    mapping(
+      "email" -> email,
+      "password" -> nonEmptyText()
+    )(Login.apply)(Login.unapply)
+  )
+
   def register() = Action {
     Ok(views.html.user.newUser(form))
   }
@@ -39,6 +46,18 @@ class UserController(userRepository: UserRepository) extends Controller {
   def login() = Action {
     Ok(views.html.user.login(loginForm))
   }
+
+  def authenticate() = DBAction { implicit rs =>
+    loginForm.bindFromRequest.fold(
+      formWithErrors => BadRequest(views.html.user.login(formWithErrors)),
+      login => {
+        userRepository.findByEmail(login.email)
+          .filter(u => BCrypt.checkpw(login.password, u.password))
+          .map(u => Redirect(routes.UserController.show(u.id.get)).withSession("session.username" -> u.id.get.toString))
+          .getOrElse(BadRequest(views.html.user.login(loginForm.withGlobalError("Invalid email address or password."))))
+      }
+    )
+  }
 }
 
 object UserController {
@@ -61,13 +80,6 @@ object UserController {
   }
 
   case class Login(email: String, password: String)
-
-  val loginForm = Form(
-    mapping(
-      "email" -> email,
-      "password" -> nonEmptyText()
-    )(Login.apply)(Login.unapply)
-  )
 
   val form = Form(
     mapping(

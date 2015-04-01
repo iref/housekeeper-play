@@ -22,6 +22,7 @@ GET         /shopping-lists                               @controllers.ShoppingL
 
 # User resource
 GET         /login                                        @controllers.UserController.login()
+POST        /login                                        @controllers.UserController.authenticate()
 GET         /users/new                                    @controllers.UserController.register()
 GET         /users/:id                                    @controllers.UserController.show(id: Int)
 POST        /users                                        @controllers.UserController.save()
