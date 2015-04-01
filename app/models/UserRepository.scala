@@ -33,4 +33,7 @@ class UserRepository {
     User.table.filter(_.id === id).firstOption
   }
 
+  def findByEmail(email: String)(implicit session: Session): Option[User] = {
+    User.table.filter(_.email === email).firstOption
+  }
 }

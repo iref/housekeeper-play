@@ -48,6 +48,31 @@ class UserRepositorySpec extends Specification with Database {
       notFound must beNone
     }
 
+    "find existing user by email" in withDatabase { implicit session =>
+      // given
+      val Some(userId) = (User.table returning User.table.map(_.id)) += userA
+
+      // when
+      val Some(found) = userRepository.findByEmail(userA.email)
+
+      // then
+      found.id must beSome(userId)
+      found.name must beEqualTo(userA.name)
+      found.email must beEqualTo(userA.email)
+      found.password must beEqualTo(userA.password)
+    }
+
+    "findByEmail returns None if user does not exist" in withDatabase { implicit session =>
+      // given
+      User.table += userA
+
+      // when
+      val notFound = userRepository.findByEmail("nonexisting@email.com")
+
+      // then
+      notFound must beNone
+    }
+
   }
 
 }
