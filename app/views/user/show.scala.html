@@ -1,5 +1,14 @@
 @(user: User)
 
 @main("User profile | Housekeeper") {
-
+    <div class="page-header">
+        <h1>User profile</h1>
+    </div>
+    <div class="row">
+        <aside class="col-md-4">
+            <!-- add gravatar image -->
+            <p class="user-name">@user.name</p>
+        </aside>
+        <div class="col-md-8 col-md-offset-4"></div>
+    </div>
 }
