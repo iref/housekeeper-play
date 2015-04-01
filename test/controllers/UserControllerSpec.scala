@@ -5,7 +5,7 @@ import org.mockito.Matchers
 import org.specs2.mock.Mockito
 import org.specs2.specification.BeforeEach
 import play.api.db.slick.Session
-import play.api.test.{FakeRequest, WithApplication, PlaySpecification}
+import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 
 class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito {
 
@@ -112,13 +112,14 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
       // given
       val request = FakeRequest().withFormUrlEncodedBody("name" -> userA.name, "email" -> userA.email,
         "password" -> userA.password, "passwordConfirmation" -> userA.password)
+      userRepository.save(any[User])(any[Session]) returns(userA.copy(id = Some(2)))
 
       // when
       val result = controller.save()(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.Application.index().url)
+      redirectLocation(result) must beSome(routes.UserController.show(2).url)
       flash(result).get("info") must beSome
     }
   }

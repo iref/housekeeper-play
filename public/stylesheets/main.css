@@ -46,3 +46,7 @@ div#itemFormContainer {
 .user-name {
     font-size: 21px;
 }
+
+.gravatar {
+    padding: 2px;
+}
