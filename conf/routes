@@ -21,8 +21,8 @@ POST        /shopping-lists                               @controllers.ShoppingL
 GET         /shopping-lists                               @controllers.ShoppingListController.index
 
 # User resource
-GET         /users/:id                                    @controllers.UserController.show(id: Int)
 GET         /users/new                                    @controllers.UserController.register()
+GET         /users/:id                                    @controllers.UserController.show(id: Int)
 POST        /users                                        @controllers.UserController.save()
 
 
