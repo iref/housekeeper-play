@@ -35,6 +35,10 @@ class UserController(userRepository: UserRepository) extends Controller {
       Redirect(routes.Application.index()).flashing("error" -> "User profile does not exist.")
     }
   }
+
+  def login() = Action {
+    Ok(views.html.user.login(loginForm))
+  }
 }
 
 object UserController {
@@ -56,6 +60,14 @@ object UserController {
     def apply(user: User): UserProfile = UserProfile(user.name, user.email)
   }
 
+  case class Login(email: String, password: String)
+
+  val loginForm = Form(
+    mapping(
+      "email" -> email,
+      "password" -> nonEmptyText()
+    )(Login.apply)(Login.unapply)
+  )
 
   val form = Form(
     mapping(

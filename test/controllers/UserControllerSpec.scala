@@ -154,4 +154,17 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
     }
   }
 
+  "#login" should {
+
+    "render login template" in new WithApplication {
+      // when
+      val result = controller.login()(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(OK)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("Please, sign in.")
+    }
+  }
+
 }

@@ -42,11 +42,17 @@ div#itemFormContainer {
     margin: 2px;
 }
 
-/* use profile */
+/* user profile */
 .user-name {
     font-size: 21px;
 }
 
 .gravatar {
     padding: 2px;
+}
+
+/* login form */
+.form-login {
+    padding: 15px;
+    font-size: 21px;
 }
