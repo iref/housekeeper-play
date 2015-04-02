@@ -73,6 +73,59 @@ class UserRepositorySpec extends Specification with Database {
       notFound must beNone
     }
 
+    "update existing user" in withDatabase { implicit session =>
+      // given
+      val Some(userId) = (User.table returning User.table.map(_.id)) += userA
+      val toUpdate = userA.copy(id = Some(userId), name = "New awesome name", email = "new@example.com", password = "newTestPassword")
+
+      // when
+      userRepository.update(toUpdate)
+
+      // then
+      val Some(updated) = User.table.filter(_.id === userId).firstOption
+      updated.email must beEqualTo("new@example.com")
+      updated.name must beEqualTo("New awesome name")
+      updated.password must beEqualTo("newTestPassword")
+      updated.id must beSome(userId)
+    }
+
+    "not update user without id" in withDatabase { implicit session =>
+      // given
+      User.table += userA
+      val toUpdate = userA.copy(name = "User without id", email = "newemail@example.com", password = "newTestPassword")
+
+      // when
+      userRepository.update(toUpdate)
+
+      // then
+      val list = User.table.list
+      list must have size(1)
+
+      val updated = list.head
+      updated.email must beEqualTo(userA.email)
+      updated.name must beEqualTo(userA.name)
+      updated.password must beEqualTo(userA.password)
+    }
+
+    "not update other users" in withDatabase { implicit session =>
+      // given
+      User.table += userA
+      val toUpdate = userA.copy(name = "Nonexistent user", email = "nonexistent@example.com",
+        password = "nonexistent@example.com", id = Some(Int.MaxValue))
+
+      // when
+      userRepository.update(toUpdate)
+
+      // then
+      val list = User.table.list
+      list must have size(1)
+
+      val updated = list.head
+      updated.email must beEqualTo(userA.email)
+      updated.name must beEqualTo(userA.name)
+      updated.password must beEqualTo(userA.password)
+    }
+
   }
 
 }
