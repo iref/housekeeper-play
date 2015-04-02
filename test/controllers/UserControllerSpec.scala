@@ -241,4 +241,32 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
     }
   }
 
+  "#edit" should {
+    "render edit user template for existing user" in new WithApplication {
+      // given
+      userRepository.find(Matchers.eq(1))(any[Session]) returns(Some(userA.copy(id = Some(1))))
+
+      // when
+      val result = controller.edit(1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(OK)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("Edit profile")
+    }
+
+    "redirect to index if user with does not exist" in new WithApplication {
+      // given
+      userRepository.find(Matchers.eq(1))(any[Session]) returns(None)
+
+      // when
+      val result = controller.edit(1)(FakeRequest())
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.Application.index().url)
+      flash(result).get("error") must beSome
+    }
+  }
+
 }

@@ -22,11 +22,11 @@ class UserController(userRepository: UserRepository) extends Controller {
   )
 
   def register() = Action {
-    Ok(views.html.user.newUser(form))
+    Ok(views.html.user.newUser(registrationForm))
   }
 
   def save() = DBAction { implicit rs =>
-    form.bindFromRequest.fold(
+    registrationForm.bindFromRequest.fold(
       formWithErrors => BadRequest(views.html.user.newUser(formWithErrors)),
       data => {
         val newUser = userRepository.save(data.toUser)
@@ -58,6 +58,14 @@ class UserController(userRepository: UserRepository) extends Controller {
       }
     )
   }
+
+  def edit(id: Int) = DBAction { implicit rs =>
+    userRepository.find(id).map { u =>
+      NotImplemented
+    } getOrElse {
+      Redirect(routes.Application.index()).flashing("error" -> "User does not exist")
+    }
+  }
 }
 
 object UserController {
@@ -81,7 +89,7 @@ object UserController {
 
   case class Login(email: String, password: String)
 
-  val form = Form(
+  val registrationForm = Form(
     mapping(
       "name" -> nonEmptyText(1, 30),
       "email" -> email,
@@ -90,5 +98,18 @@ object UserController {
     )(Registration.apply)(Registration.unapply) verifying("Password does not match with confirmation", { formData =>
       formData.password == formData.passwordConfirmation
     })
+  )
+
+  case class EditUserFormData(name: String, email: String, oldPassword: String,
+                              password: String, passwordConfirmation: String)
+
+  val editUserForm = Form(
+    mapping(
+      "name" -> nonEmptyText(1, 30),
+      "email" -> email,
+      "oldPassword" -> nonEmptyText,
+      "password" -> nonEmptyText(6),
+      "passwordConfirmation" -> nonEmptyText(6)
+    )(EditUserFormData.apply)(EditUserFormData.unapply)
   )
 }

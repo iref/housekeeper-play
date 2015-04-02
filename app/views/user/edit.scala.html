@@ -1,0 +1,16 @@
+@(form: Form[UserController.EditUserFormData])
+
+@implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
+
+@main("Edit profile | Housekeeper") {
+    <div class="page-header">
+        <h1>Edit profile</h1>
+    </div>
+    <div>
+        @b3.form() {
+            @b3.text(form("name"), '_label -> "Name")
+            @b3.email(form("email"), '_label -> "Email")
+            @b3.password(form("oldPassword"), '_label -> "Old password")
+        }
+    </div>
+}
