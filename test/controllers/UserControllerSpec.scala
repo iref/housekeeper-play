@@ -269,4 +269,26 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
     }
   }
 
+  "#update" should {
+
+    "not update user without name" in new WithApplication {
+      // given
+      
+    }
+
+    "not update user without email"
+
+    "not update user password if it does not match confirmation"
+
+    "not update user password if old password is missing"
+
+    "not update user password if old password is invalid"
+
+    "update user in repository"
+
+    "redirect to user detail after successful update"
+
+    "stay on edit page if user update failed"
+  }
+
 }
