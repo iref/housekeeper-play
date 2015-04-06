@@ -61,11 +61,14 @@ class UserController(userRepository: UserRepository) extends Controller {
 
   def edit(id: Int) = DBAction { implicit rs =>
     userRepository.find(id).map { u =>
-      NotImplemented
+      val editUserData = EditUserFormData(u.name, u.email, None, None, None)
+      Ok(views.html.user.edit(id, editUserForm.fill(editUserData)))  
     } getOrElse {
       Redirect(routes.Application.index()).flashing("error" -> "User does not exist")
     }
   }
+
+  def update(id: Int) = Action { NotImplemented }
 }
 
 object UserController {
@@ -100,16 +103,16 @@ object UserController {
     })
   )
 
-  case class EditUserFormData(name: String, email: String, oldPassword: String,
-                              password: String, passwordConfirmation: String)
+  case class EditUserFormData(name: String, email: String, oldPassword: Option[String],
+                              password: Option[String], passwordConfirmation: Option[String])
 
   val editUserForm = Form(
     mapping(
       "name" -> nonEmptyText(1, 30),
       "email" -> email,
-      "oldPassword" -> nonEmptyText,
-      "password" -> nonEmptyText(6),
-      "passwordConfirmation" -> nonEmptyText(6)
+      "oldPassword" -> optional(nonEmptyText),
+      "password" -> optional(nonEmptyText(6)),
+      "passwordConfirmation" -> optional(nonEmptyText(6))
     )(EditUserFormData.apply)(EditUserFormData.unapply)
   )
 }
