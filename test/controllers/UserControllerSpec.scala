@@ -273,12 +273,57 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
 
     "not update user without name" in new WithApplication {
       // given
-      
+      val request = FakeRequest().withFormUrlEncodedBody("email" -> "test@example.com")
+
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"name_error")
     }
 
-    "not update user without email"
+    "not update user without email" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> "test")
 
-    "not update user password if it does not match confirmation"
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"email_error")
+    }
+
+    "not update user password if confirmation is missing" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> "test", "email" -> "test@example.com",
+        "password" -> "testPassword2", "oldPassword" -> "testPassword")
+
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      contentAsString(result) must contain("span id=\"passwordConfirmation_error")
+    }
+
+    "not update user password if it does not match confirmation" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> userA.name, "email" -> userA.email,
+        "password" -> "testPasswordXXX", "passwordConfirmation" -> userA.password)
+
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(BAD_REQUEST)
+      contentType(result) must beSome("text/html")
+      flash(result).get("error") must beSome
+    }
 
     "not update user password if old password is missing"
 

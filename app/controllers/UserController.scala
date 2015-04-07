@@ -14,11 +14,16 @@ class UserController(userRepository: UserRepository) extends Controller {
 
   import UserController._
 
-  val loginForm = Form(
+  private val editUserForm = Form(
     mapping(
+      "name" -> nonEmptyText(1, 30),
       "email" -> email,
-      "password" -> nonEmptyText()
-    )(Login.apply)(Login.unapply)
+      "oldPassword" -> optional(nonEmptyText),
+      "password" -> optional(nonEmptyText(6)),
+      "passwordConfirmation" -> optional(nonEmptyText(6))
+    )(EditUserFormData.apply)(EditUserFormData.unapply) verifying("Password does not match with confirmation", { formData =>
+      confirmPassword(formData.password, formData.passwordConfirmation)
+    })
   )
 
   def register() = Action {
@@ -68,7 +73,20 @@ class UserController(userRepository: UserRepository) extends Controller {
     }
   }
 
-  def update(id: Int) = Action { NotImplemented }
+  def update(id: Int) = Action { implicit request =>
+    editUserForm.bindFromRequest.fold(
+      formWithErrors => BadRequest(views.html.user.edit(id, formWithErrors)),
+      data => NotImplemented
+    )
+  }
+
+  private def confirmPassword(password: Option[String], passwordConfirmation: Option[String]): Boolean = {
+    val matching = for {
+      p <- password
+      c <- passwordConfirmation
+    } yield p == c
+    matching.getOrElse(false)
+  }
 }
 
 object UserController {
@@ -92,6 +110,13 @@ object UserController {
 
   case class Login(email: String, password: String)
 
+  val loginForm = Form(
+    mapping(
+      "email" -> email,
+      "password" -> nonEmptyText()
+    )(Login.apply)(Login.unapply)
+  )
+
   val registrationForm = Form(
     mapping(
       "name" -> nonEmptyText(1, 30),
@@ -106,13 +131,4 @@ object UserController {
   case class EditUserFormData(name: String, email: String, oldPassword: Option[String],
                               password: Option[String], passwordConfirmation: Option[String])
 
-  val editUserForm = Form(
-    mapping(
-      "name" -> nonEmptyText(1, 30),
-      "email" -> email,
-      "oldPassword" -> optional(nonEmptyText),
-      "password" -> optional(nonEmptyText(6)),
-      "passwordConfirmation" -> optional(nonEmptyText(6))
-    )(EditUserFormData.apply)(EditUserFormData.unapply)
-  )
 }
