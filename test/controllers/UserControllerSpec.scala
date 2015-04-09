@@ -4,15 +4,16 @@ import models.{User, UserRepository}
 import org.mindrot.jbcrypt.BCrypt
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
-import org.specs2.specification.BeforeEach
+import org.specs2.mutable.Before
+import org.specs2.specification.{Scope, BeforeEach}
 import play.api.db.slick.Session
 import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
 
-class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito {
-
-  val userRepository = mock[UserRepository]
+class UserControllerSpec extends PlaySpecification with Mockito with BeforeEach {
 
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
+
+  val userRepository = mock[UserRepository]
 
   val controller = new UserController(userRepository)
 
@@ -308,7 +309,7 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
       contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"passwordConfirmation_error")
+      contentAsString(result) must contain("div class=\"alert alert-danger")
     }
 
     "not update user password if it does not match confirmation" in new WithApplication {
@@ -322,18 +323,47 @@ class UserControllerSpec extends PlaySpecification with BeforeEach with Mockito 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
       contentType(result) must beSome("text/html")
-      flash(result).get("error") must beSome
+      contentAsString(result) must contain("div class=\"alert alert-danger")
     }
 
-    "not update user password if old password is missing"
+    "update user in repository" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> "Updated user name", "email" -> "updated@example.com",
+        "password" -> "newUpdatedPasswordXXX", "passwordConfirmation" -> "newUpdatedPasswordXXX")
 
-    "not update user password if old password is invalid"
+      // when
+      val result = controller.update(1)(request)
 
-    "update user in repository"
+      // then
+      there was one(userRepository).update(any[User])(any[Session])
+    }
 
-    "redirect to user detail after successful update"
+    "update user if password is not provided" in new WithApplication {
+      // given
+      val expectedUser = userA.copy(name = "Passwordless user update", email = "updated@example.com", id = Some(1))
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> expectedUser.name, "email" -> expectedUser.email)
+      userRepository.find(Matchers.eq(1))(any[Session]) returns(Some(userA.copy(id = Some(1))))
 
-    "stay on edit page if user update failed"
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      there was one(userRepository).update(any[User])(any[Session])
+    }
+
+    "redirect to user detail after successful update" in new WithApplication {
+      // given
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> "Updated user name", "email" -> "updated@example.com",
+        "password" -> "newPassword", "passwordConfirmation" -> "newPassword")
+
+      // when
+      val result = controller.update(1)(request)
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome(routes.UserController.show(1).url)
+    }
+
   }
 
 }

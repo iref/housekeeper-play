@@ -3,6 +3,7 @@ package controllers
 import com.google.common.base.Charsets
 import models.{User, UserRepository}
 import org.mindrot.jbcrypt.BCrypt
+import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -14,18 +15,6 @@ class UserController(userRepository: UserRepository) extends Controller {
 
   import UserController._
 
-  private val editUserForm = Form(
-    mapping(
-      "name" -> nonEmptyText(1, 30),
-      "email" -> email,
-      "oldPassword" -> optional(nonEmptyText),
-      "password" -> optional(nonEmptyText(6)),
-      "passwordConfirmation" -> optional(nonEmptyText(6))
-    )(EditUserFormData.apply)(EditUserFormData.unapply) verifying("Password does not match with confirmation", { formData =>
-      confirmPassword(formData.password, formData.passwordConfirmation)
-    })
-  )
-
   def register() = Action {
     Ok(views.html.user.newUser(registrationForm))
   }
@@ -35,7 +24,8 @@ class UserController(userRepository: UserRepository) extends Controller {
       formWithErrors => BadRequest(views.html.user.newUser(formWithErrors)),
       data => {
         val newUser = userRepository.save(data.toUser)
-        Redirect(routes.UserController.show(newUser.id.get)).flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
+        Redirect(routes.UserController.show(newUser.id.get))
+          .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
       }
     )
   }
@@ -66,26 +56,30 @@ class UserController(userRepository: UserRepository) extends Controller {
 
   def edit(id: Int) = DBAction { implicit rs =>
     userRepository.find(id).map { u =>
-      val editUserData = EditUserFormData(u.name, u.email, None, None, None)
-      Ok(views.html.user.edit(id, editUserForm.fill(editUserData)))  
+      val editUserData = EditUserFormData(u.name, u.email, None, None)
+      Ok(views.html.user.edit(id, editUserForm.fill(editUserData)))
     } getOrElse {
       Redirect(routes.Application.index()).flashing("error" -> "User does not exist")
     }
   }
 
-  def update(id: Int) = Action { implicit request =>
+  def update(id: Int) = DBAction { implicit rs =>
     editUserForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.user.edit(id, formWithErrors)),
-      data => NotImplemented
-    )
-  }
+      formWithErrors => {
+        BadRequest(views.html.user.edit(id, formWithErrors))
+      },
+      data => {
+        data.password.map { p =>
+          User(data.name, data.email, BCrypt.hashpw(p, BCrypt.gensalt()), Some(id))
+        } orElse {
+          userRepository.find(id).map(u => u.copy(name = data.name, email = data.email))
+        } foreach { user =>
+          userRepository.update(user)
+        }
 
-  private def confirmPassword(password: Option[String], passwordConfirmation: Option[String]): Boolean = {
-    val matching = for {
-      p <- password
-      c <- passwordConfirmation
-    } yield p == c
-    matching.getOrElse(false)
+        Redirect(routes.UserController.show(id))
+      }
+    )
   }
 }
 
@@ -96,6 +90,17 @@ object UserController {
       User(name, email, hashedPassword)
     }
   }
+
+  val registrationForm = Form(
+    mapping(
+      "name" -> nonEmptyText(1, 30),
+      "email" -> email,
+      "password" -> nonEmptyText(6),
+      "passwordConfirmation" -> nonEmptyText(6)
+    )(Registration.apply)(Registration.unapply) verifying("Password does not match with confirmation", { formData =>
+      formData.password == formData.passwordConfirmation
+    })
+  )
 
   case class UserProfile(name: String, email: String) {
     def gravatar(): String = {
@@ -117,18 +122,16 @@ object UserController {
     )(Login.apply)(Login.unapply)
   )
 
-  val registrationForm = Form(
-    mapping(
-      "name" -> nonEmptyText(1, 30),
-      "email" -> email,
-      "password" -> nonEmptyText(6),
-      "passwordConfirmation" -> nonEmptyText(6)
-    )(Registration.apply)(Registration.unapply) verifying("Password does not match with confirmation", { formData =>
-      formData.password == formData.passwordConfirmation
-    })
+  case class EditUserFormData(name: String, email: String, password: Option[String], passwordConfirmation: Option[String])
+
+  val editUserForm = Form(
+   mapping(
+     "name" -> nonEmptyText(1, 30),
+     "email" -> email,
+     "password" -> optional(nonEmptyText(6)),
+     "passwordConfirmation" -> optional(nonEmptyText(6))
+   )(EditUserFormData.apply)(EditUserFormData.unapply) verifying("Password does not match with confirmation", { formData =>
+     formData.password == formData.passwordConfirmation
+   })
   )
-
-  case class EditUserFormData(name: String, email: String, oldPassword: Option[String],
-                              password: Option[String], passwordConfirmation: Option[String])
-
 }

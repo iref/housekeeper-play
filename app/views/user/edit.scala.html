@@ -3,6 +3,9 @@
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
 @main("Edit profile | Housekeeper") {
+    @form.globalErrors.map { error =>
+        <div class="alert alert-danger">@error.message</div>
+    }
     <div class="page-header">
         <h1>Edit profile</h1>
     </div>
@@ -10,7 +13,6 @@
         @b3.form(routes.UserController.update(userId)) {
             @b3.text(form("name"), '_label -> "Name")
             @b3.email(form("email"), '_label -> "Email")
-            @b3.password(form("oldPassword"), '_label -> "Old password")
             @b3.password(form("password"), '_label -> "New password")
             @b3.password(form("passwordConfirmation"), '_label -> "New password confirmation")
         }
