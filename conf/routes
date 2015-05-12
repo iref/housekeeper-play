@@ -20,9 +20,11 @@ GET         /shopping-lists/:id                           @controllers.ShoppingL
 POST        /shopping-lists                               @controllers.ShoppingListController.save
 GET         /shopping-lists                               @controllers.ShoppingListController.index
 
+# Session resource
+GET         /login                                        @controllers.SessionController.login()
+POST        /login                                        @controllers.SessionController.authenticate()
+
 # User resource
-GET         /login                                        @controllers.UserController.login()
-POST        /login                                        @controllers.UserController.authenticate()
 GET         /users/new                                    @controllers.UserController.register()
 GET         /users/:id/edit                               @controllers.UserController.edit(id: Int)
 POST        /users/:id/edit                               @controllers.UserController.update(id: Int)

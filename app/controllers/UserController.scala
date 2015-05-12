@@ -3,7 +3,6 @@ package controllers
 import com.google.common.base.Charsets
 import models.{User, UserRepository}
 import org.mindrot.jbcrypt.BCrypt
-import play.api.Logger
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
@@ -26,6 +25,7 @@ class UserController(userRepository: UserRepository) extends Controller {
         val newUser = userRepository.save(data.toUser)
         Redirect(routes.UserController.show(newUser.id.get))
           .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
+          .withSession("session.username" -> newUser.id.get.toString)
       }
     )
   }
@@ -36,22 +36,6 @@ class UserController(userRepository: UserRepository) extends Controller {
     } getOrElse {
       Redirect(routes.Application.index()).flashing("error" -> "User profile does not exist.")
     }
-  }
-
-  def login() = Action {
-    Ok(views.html.user.login(loginForm))
-  }
-
-  def authenticate() = DBAction { implicit rs =>
-    loginForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.user.login(formWithErrors)),
-      login => {
-        userRepository.findByEmail(login.email)
-          .filter(u => BCrypt.checkpw(login.password, u.password))
-          .map(u => Redirect(routes.UserController.show(u.id.get)).withSession("session.username" -> u.id.get.toString))
-          .getOrElse(BadRequest(views.html.user.login(loginForm.withGlobalError("Invalid email address or password."))))
-      }
-    )
   }
 
   def edit(id: Int) = DBAction { implicit rs =>
@@ -112,15 +96,6 @@ object UserController {
   object UserProfile {
     def apply(user: User): UserProfile = UserProfile(user.name, user.email)
   }
-
-  case class Login(email: String, password: String)
-
-  val loginForm = Form(
-    mapping(
-      "email" -> email,
-      "password" -> nonEmptyText()
-    )(Login.apply)(Login.unapply)
-  )
 
   case class EditUserFormData(name: String, email: String, password: Option[String], passwordConfirmation: Option[String])
 
