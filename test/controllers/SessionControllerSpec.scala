@@ -6,6 +6,7 @@ import org.mockito.{Mockito => m, Matchers}
 import org.specs2.mock.Mockito
 import org.specs2.specification.BeforeEach
 import play.api.db.slick._
+import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{FakeRequest, WithApplication, PlaySpecification}
 
 class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEach {
@@ -27,6 +28,32 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       status(result) must beEqualTo(OK)
       contentType(result) must beSome("text/html")
       contentAsString(result) must contain("Please, sign in.")
+    }
+  }
+
+  "#logout" should {
+
+    "remove username from session" in new WithApplication {
+      // given
+      val request = FakeRequest().withSession(("session.username", "1"))
+
+      // when
+      val result = controller.logout()(request)
+
+      // then
+      session(result).isEmpty must beTrue
+    }
+
+    "redirect to home page" in new WithApplication {
+      // given
+      val request = FakeRequest().withSession("session.username" -> "1")
+
+      // when
+      val result = controller.logout()(request)
+
+      // then
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome("/")
     }
   }
 

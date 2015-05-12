@@ -23,6 +23,7 @@ GET         /shopping-lists                               @controllers.ShoppingL
 # Session resource
 GET         /login                                        @controllers.SessionController.login()
 POST        /login                                        @controllers.SessionController.authenticate()
+GET         /logout                                       @controllers.SessionController.logout()
 
 # User resource
 GET         /users/new                                    @controllers.UserController.register()

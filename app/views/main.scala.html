@@ -43,7 +43,7 @@
                     <ul class="nav navbar-nav navbar-right">
                         @if(session.get("session.username").isDefined) {
                             <li>
-                                <a href="#">Logout</a>
+                                <a href="@routes.SessionController.logout()">Logout</a>
                             </li>
                         } else {
                             <li>

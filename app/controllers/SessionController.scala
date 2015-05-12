@@ -15,6 +15,10 @@ class SessionController(userRepository: UserRepository) extends Controller {
     Ok(views.html.session.login(loginForm))
   }
 
+  def logout() = Action { implicit request =>
+    Redirect(routes.Application.index).withNewSession
+  }
+
   def authenticate() = DBAction { implicit rs =>
     loginForm.bindFromRequest.fold(
       formWithErrors => BadRequest(views.html.session.login(formWithErrors)),
