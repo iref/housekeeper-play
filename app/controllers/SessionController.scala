@@ -11,7 +11,7 @@ import play.api.mvc.{Action, Controller}
 class SessionController(userRepository: UserRepository) extends Controller {
   import SessionController._
 
-  def login() = Action {
+  def login() = Action { implicit request =>
     Ok(views.html.session.login(loginForm))
   }
 

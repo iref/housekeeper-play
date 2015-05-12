@@ -1,4 +1,4 @@
-@(shoppingLists: List[ShoppingList])(implicit flash: Flash)
+@(shoppingLists: List[ShoppingList])(implicit flash: Flash, session: Session)
 
 @main("Shopping Lists | Housekeeper") {
     @flash.get("info").map { info =>

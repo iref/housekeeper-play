@@ -14,7 +14,7 @@ class UserController(userRepository: UserRepository) extends Controller {
 
   import UserController._
 
-  def register() = Action {
+  def register() = Action { implicit request =>
     Ok(views.html.user.newUser(registrationForm))
   }
 

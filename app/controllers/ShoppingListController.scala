@@ -23,7 +23,7 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
     Ok(views.html.shoppingList.show(shoppingListDetail, ShoppingListItemController.form))
   }
 
-  def newList() = Action {
+  def newList() = Action { implicit request =>
     Ok(views.html.shoppingList.newList(form))
   }
 

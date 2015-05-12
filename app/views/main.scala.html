@@ -1,4 +1,4 @@
-@(title: String)(content: Html)
+@(title: String)(content: Html)(implicit session: Session)
 <!DOCTYPE html>
 <html>
     <head>
@@ -41,12 +41,18 @@
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        <li>
-                            <a href="@routes.UserController.register()">Register</a>
-                        </li>
-                        <li>
-                            <a href="@routes.SessionController.login()">Login</a>
-                        </li>
+                        @if(session.get("session.username").isDefined) {
+                            <li>
+                                <a href="#">Logout</a>
+                            </li>
+                        } else {
+                            <li>
+                                <a href="@routes.UserController.register()">Register</a>
+                            </li>
+                            <li>
+                                <a href="@routes.SessionController.login()">Login</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
