@@ -1,0 +1,16 @@
+@(profile: UserController.UserProfile)(implicit session: Session)
+
+@main("User profile | Housekeeper") {
+    <div class="page-header">
+        <h1>User profile</h1>
+    </div>
+    <div class="row">
+        <aside class="col-md-3">
+            <div class="gravatar">
+                <img src="@profile.gravatar" alt="@profile.name"/>
+            </div>
+            <p class="user-name">@profile.name</p>
+        </aside>
+        <div class="col-md-9 col-md-offset-3"></div>
+    </div>
+}

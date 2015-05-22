@@ -1,11 +1,9 @@
 package controllers
 
-import models.{ShoppingListItem, ShoppingList, ShoppingListRepository}
+import models.{ShoppingList, ShoppingListRepository}
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.data.validation.Constraints._
-import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick._
 import play.api.mvc.{Action, Controller}
 
@@ -25,7 +23,7 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository) ext
     Ok(views.html.shoppingList.show(shoppingListDetail, ShoppingListItemController.form))
   }
 
-  def newList() = Action {
+  def newList() = Action { implicit request =>
     Ok(views.html.shoppingList.newList(form))
   }
 

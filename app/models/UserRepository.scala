@@ -29,8 +29,15 @@ class UserRepository {
     q += user
   }
 
+  def update(user: User)(implicit session: Session): Unit = {
+    User.table.filter(_.id === user.id).update(user)
+  }
+
   def find(id: Int)(implicit session: Session): Option[User] = {
     User.table.filter(_.id === id).firstOption
   }
 
+  def findByEmail(email: String)(implicit session: Session): Option[User] = {
+    User.table.filter(_.email === email).firstOption
+  }
 }

@@ -1,0 +1,22 @@
+@(form: Form[SessionController.Login])(implicit session: Session)
+
+@implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
+
+@main("Sign in | Housekeeper") {
+    <ul>
+        @form.globalErrors.map { error =>
+            <li class="text-danger">@error.message</li>
+        }
+    </ul>
+
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4">
+            @b3.form(routes.SessionController.authenticate()) {
+                <h1>Please, sign in.</h1>
+                @b3.text(form("email"), '_label -> "Email Address")
+                @b3.password(form("password"), '_label -> "Password")
+                @b3.submit('class -> "btn btn-primary btn-block") { Sign in }
+            }
+        </div>
+    </div>
+}

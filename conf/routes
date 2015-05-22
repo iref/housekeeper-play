@@ -20,6 +20,18 @@ GET         /shopping-lists/:id                           @controllers.ShoppingL
 POST        /shopping-lists                               @controllers.ShoppingListController.save
 GET         /shopping-lists                               @controllers.ShoppingListController.index
 
+# Session resource
+GET         /login                                        @controllers.SessionController.login()
+POST        /login                                        @controllers.SessionController.authenticate()
+GET         /logout                                       @controllers.SessionController.logout()
+
+# User resource
+GET         /users/new                                    @controllers.UserController.register()
+GET         /users/:id/edit                               @controllers.UserController.edit(id: Int)
+POST        /users/:id/edit                               @controllers.UserController.update(id: Int)
+GET         /users/:id                                    @controllers.UserController.show(id: Int)
+POST        /users                                        @controllers.UserController.save()
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.at(path="/public", file)
