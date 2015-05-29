@@ -27,3 +27,5 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
   "org.slf4j" % "slf4j-nop" % "1.7.12"
 )
+
+routesGenerator := play.routes.compiler.InjectedRoutesGenerator

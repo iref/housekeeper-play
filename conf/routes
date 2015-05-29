@@ -6,31 +6,31 @@
 GET         /                                             controllers.Application.index
 
 # Shopping List Item resource
-POST        /shopping-lists/:id/items/new                 @controllers.ShoppingListItemController.save(id: Int)
-GET         /shopping-lists/:listId/items/:id             @controllers.ShoppingListItemController.remove(id: Int, listId: Int)
-POST        /shopping-lists/:listId/items/:id             @controllers.ShoppingListItemController.update(id: Int, listId: Int)
-GET         /shopping-lists/:listId/items/:id/edit        @controllers.ShoppingListItemController.edit(id: Int, listId: Int)
+POST        /shopping-lists/:id/items/new                 controllers.ShoppingListItemController.save(id: Int)
+GET         /shopping-lists/:listId/items/:id             controllers.ShoppingListItemController.remove(id: Int, listId: Int)
+POST        /shopping-lists/:listId/items/:id             controllers.ShoppingListItemController.update(id: Int, listId: Int)
+GET         /shopping-lists/:listId/items/:id/edit        controllers.ShoppingListItemController.edit(id: Int, listId: Int)
 
 # Shopping List resource
-GET         /shopping-lists/new                           @controllers.ShoppingListController.newList
-GET         /shopping-lists/:id/delete                    @controllers.ShoppingListController.delete(id: Int)
-GET         /shopping-lists/:id/edit                      @controllers.ShoppingListController.edit(id: Int)
-POST        /shopping-lists/:id/edit                      @controllers.ShoppingListController.update(id: Int)
-GET         /shopping-lists/:id                           @controllers.ShoppingListController.show(id: Int)
-POST        /shopping-lists                               @controllers.ShoppingListController.save
-GET         /shopping-lists                               @controllers.ShoppingListController.index
+GET         /shopping-lists/new                           controllers.ShoppingListController.newList
+GET         /shopping-lists/:id/delete                    controllers.ShoppingListController.delete(id: Int)
+GET         /shopping-lists/:id/edit                      controllers.ShoppingListController.edit(id: Int)
+POST        /shopping-lists/:id/edit                      controllers.ShoppingListController.update(id: Int)
+GET         /shopping-lists/:id                           controllers.ShoppingListController.show(id: Int)
+POST        /shopping-lists                               controllers.ShoppingListController.save
+GET         /shopping-lists                               controllers.ShoppingListController.index
 
 # Session resource
-GET         /login                                        @controllers.SessionController.login()
-POST        /login                                        @controllers.SessionController.authenticate()
-GET         /logout                                       @controllers.SessionController.logout()
+GET         /login                                        controllers.SessionController.login()
+POST        /login                                        controllers.SessionController.authenticate()
+GET         /logout                                       controllers.SessionController.logout()
 
 # User resource
-GET         /users/new                                    @controllers.UserController.register()
-GET         /users/:id/edit                               @controllers.UserController.edit(id: Int)
-POST        /users/:id/edit                               @controllers.UserController.update(id: Int)
-GET         /users/:id                                    @controllers.UserController.show(id: Int)
-POST        /users                                        @controllers.UserController.save()
+GET         /users/new                                    controllers.UserController.register()
+GET         /users/:id/edit                               controllers.UserController.edit(id: Int)
+POST        /users/:id/edit                               controllers.UserController.update(id: Int)
+GET         /users/:id                                    controllers.UserController.show(id: Int)
+POST        /users                                        controllers.UserController.save()
 
 
 # Map static resources from the /public folder to the /assets URL path
