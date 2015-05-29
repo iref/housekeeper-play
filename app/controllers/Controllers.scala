@@ -1,7 +1,6 @@
 package controllers
 
-import com.softwaremill.macwire.MacwireMacros._
-import models.{ShoppingListItemRepositoryImpl, ShoppingListRepositoryImpl, ShoppingListRepository, UserRepositoryImpl}
+import models.{ShoppingListItemRepositoryImpl, ShoppingListRepositoryImpl, UserRepositoryImpl}
 import play.api.i18n.MessagesApi
 
 /**
@@ -9,7 +8,7 @@ import play.api.i18n.MessagesApi
  */
 trait Controllers {
 
-  lazy val applicationController = new Application
+  lazy val applicationController = new ApplicationController
 
   lazy val shoppingListController = new ShoppingListController(shoppingListRepository, messagesApi)
 

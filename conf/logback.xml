@@ -16,11 +16,11 @@
     </encoder>
   </appender>
 
-  <appender name="ASYNCFILE" class="ch.qos.logback.core.AsyncAppender">
+  <appender name="ASYNCFILE" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="FILE" />
   </appender>
 
-  <appender name="ASYNCSTDOUT" class="ch.qos.logback.core.AsyncAppender">
+  <appender name="ASYNCSTDOUT" class="ch.qos.logback.classic.AsyncAppender">
     <appender-ref ref="STDOUT" />
   </appender>
 

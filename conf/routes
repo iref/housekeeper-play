@@ -3,7 +3,7 @@
 # ~~~~
 
 # Home page
-GET         /                                             controllers.Application.index
+GET         /                                             controllers.ApplicationController.index
 
 # Shopping List Item resource
 POST        /shopping-lists/:id/items/new                 controllers.ShoppingListItemController.save(id: Int)
