@@ -1,34 +1,48 @@
 package models
 
 import org.specs2.mutable.Specification
-import play.api.db.slick.Config.driver.simple._
+import play.api.Application
+import play.api.test.WithApplicationLoader
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
-class UserRepositorySpec extends Specification with Database {
-
-  val userRepository = new UserRepository()
+class UserRepositorySpec extends Specification {
 
   val userA = User("John Doe", "doe@example.com", "test_password")
+  
+  trait WithRepository extends WithApplicationLoader {
+    private val app2Repository = Application.instanceCache[UserRepositoryImpl]
+    val userRepository = app2Repository(app)
+  }
 
   "UserRepository" should {
 
-    "save new user" in withDatabase { implicit session =>
+    "save new user" in new WithRepository {
       // when
-      val user = userRepository.save(userA)
+      val Some(id) = Await.result(userRepository.save(userA), 1.second).id
 
       // then
-      val Some(found) = User.table.filter(_.id === user.id).firstOption
-      user.id must beEqualTo(found.id)
+      val Some(found) = Await.result(userRepository.find(id), 1.second)
+      found.id must beSome(id)
       found.name must beEqualTo(userA.name)
       found.email must beEqualTo(userA.email)
       found.password must beEqualTo(userA.password)
     }
 
-    "find existing user by id" in withDatabase { implicit session =>
+    "return all users" in new WithRepository {
+      // when
+      Await.ready(userRepository.save(userA), 1.second)
+
+      val users = Await.result(userRepository.all, 1.second)
+      users must have size(1)
+    }
+
+    "find existing user by id" in new WithRepository {
       // given
-      val Some(userId) = (User.table returning User.table.map(_.id)) += userA
+      val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
 
       // when
-      val Some(found) = userRepository.find(userId)
+      val Some(found) = Await.result(userRepository.find(userId), 1.second)
 
       // then
       found.id must beSome(userId)
@@ -37,23 +51,23 @@ class UserRepositorySpec extends Specification with Database {
       found.password must beEqualTo(userA.password)
     }
 
-    "find nonexistent user returns None" in withDatabase { implicit session =>
+    "find nonexistent user returns None" in new WithRepository {
       // given
-      User.table += userA
+      Await.ready(userRepository.save(userA), 1.second)
 
       // when
-      val notFound = userRepository.find(Int.MaxValue)
+      val notFound = Await.result(userRepository.find(Int.MaxValue), 1.second)
 
       // then
       notFound must beNone
     }
 
-    "find existing user by email" in withDatabase { implicit session =>
+    "find existing user by email" in new WithRepository {
       // given
-      val Some(userId) = (User.table returning User.table.map(_.id)) += userA
+      val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
 
       // when
-      val Some(found) = userRepository.findByEmail(userA.email)
+      val Some(found) = Await.result(userRepository.findByEmail(userA.email), 1.second)
 
       // then
       found.id must beSome(userId)
@@ -62,43 +76,43 @@ class UserRepositorySpec extends Specification with Database {
       found.password must beEqualTo(userA.password)
     }
 
-    "findByEmail returns None if user does not exist" in withDatabase { implicit session =>
+    "findByEmail returns None if user does not exist" in new WithRepository {
       // given
-      User.table += userA
+      Await.ready(userRepository.save(userA), 1.second)
 
       // when
-      val notFound = userRepository.findByEmail("nonexisting@email.com")
+      val notFound = Await.result(userRepository.findByEmail("nonexisting@email.com"), 1.second)
 
       // then
       notFound must beNone
     }
 
-    "update existing user" in withDatabase { implicit session =>
+    "update existing user" in new WithRepository {
       // given
-      val Some(userId) = (User.table returning User.table.map(_.id)) += userA
+      val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
       val toUpdate = userA.copy(id = Some(userId), name = "New awesome name", email = "new@example.com", password = "newTestPassword")
 
       // when
-      userRepository.update(toUpdate)
+      Await.ready(userRepository.update(toUpdate), 1.second)
 
       // then
-      val Some(updated) = User.table.filter(_.id === userId).firstOption
+      val Some(updated) = Await.result(userRepository.find(userId), 1.second)
       updated.email must beEqualTo("new@example.com")
       updated.name must beEqualTo("New awesome name")
       updated.password must beEqualTo("newTestPassword")
       updated.id must beSome(userId)
     }
 
-    "not update user without id" in withDatabase { implicit session =>
+    "not update user without id" in new WithRepository {
       // given
-      User.table += userA
+      Await.ready(userRepository.save(userA), 1.second)
       val toUpdate = userA.copy(name = "User without id", email = "newemail@example.com", password = "newTestPassword")
 
       // when
-      userRepository.update(toUpdate)
+      Await.ready(userRepository.update(toUpdate), 1.second)
 
       // then
-      val list = User.table.list
+      val list = Await.result(userRepository.all, 1.second)
       list must have size(1)
 
       val updated = list.head
@@ -107,17 +121,17 @@ class UserRepositorySpec extends Specification with Database {
       updated.password must beEqualTo(userA.password)
     }
 
-    "not update other users" in withDatabase { implicit session =>
+    "not update other users" in new WithRepository {
       // given
-      User.table += userA
+      Await.ready(userRepository.save(userA), 1.second)
       val toUpdate = userA.copy(name = "Nonexistent user", email = "nonexistent@example.com",
         password = "nonexistent@example.com", id = Some(Int.MaxValue))
 
       // when
-      userRepository.update(toUpdate)
+      Await.ready(userRepository.update(toUpdate), 1.second)
 
       // then
-      val list = User.table.list
+      val list = Await.result(userRepository.all, 1.second)
       list must have size(1)
 
       val updated = list.head

@@ -1,26 +1,29 @@
 package controllers
 
-import models.{User, UserRepository}
+import models.{User, UserRepositoryImpl}
 import org.mindrot.jbcrypt.BCrypt
-import org.mockito.{Mockito => m, Matchers}
+import org.mockito.{Matchers, Mockito => m}
 import org.specs2.mock.Mockito
-import org.specs2.specification.BeforeEach
-import play.api.db.slick._
-import play.api.mvc.AnyContentAsEmpty
-import play.api.test.{FakeRequest, WithApplication, PlaySpecification}
+import play.api.Application
+import play.api.i18n.MessagesApi
+import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
 
-class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEach {
+import scala.concurrent.Future
+
+class SessionControllerSpec extends PlaySpecification with Mockito {
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
-  val userRepository = mock[UserRepository]
 
-  val controller = new SessionController(userRepository)
+  trait WithController extends WithApplicationLoader {
+    val userRepository = mock[UserRepositoryImpl]
 
-  override def before: Any = m.reset(userRepository)
+    private val app2MessageApi = Application.instanceCache[MessagesApi]
+    val controller = new SessionController(userRepository, app2MessageApi(app))
+  }
 
   "#login" should {
 
-    "render login template" in new WithApplication {
+    "render login template" in new WithController {
       // when
       val result = controller.login()(FakeRequest())
 
@@ -33,7 +36,7 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
 
   "#logout" should {
 
-    "remove username from session" in new WithApplication {
+    "remove username from session" in new WithController {
       // given
       val request = FakeRequest().withSession(("session.username", "1"))
 
@@ -44,7 +47,7 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       session(result).isEmpty must beTrue
     }
 
-    "redirect to home page" in new WithApplication {
+    "redirect to home page" in new WithController {
       // given
       val request = FakeRequest().withSession("session.username" -> "1")
 
@@ -59,7 +62,7 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
 
   "#authenticate" should {
 
-    "not log in user without email" in new WithApplication {
+    "not log in user without email" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("password" -> "testPassword")
 
@@ -72,7 +75,7 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("span id=\"email_error")
     }
 
-    "not log in user without password" in new WithApplication {
+    "not log in user without password" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("email" -> "doe@example.com")
 
@@ -85,11 +88,11 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("span id=\"password_error")
     }
 
-    "not log in user with invalid password" in new WithApplication {
+    "not log in user with invalid password" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("email" -> userA.email,
         "password" -> "totally wrong password")
-      userRepository.findByEmail(Matchers.eq(userA.email))(any[Session]) returns(Some(userA))
+      userRepository.findByEmail(userA.email) returns(Future.successful(Some(userA)))
 
       // when
       val result = controller.authenticate()(request)
@@ -100,11 +103,11 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("Invalid email address or password.")
     }
 
-    "not log in nonexistent user" in new WithApplication {
+    "not log in nonexistent user" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("email" -> "nonexisting@email.com",
         "password" -> userA.password)
-      userRepository.findByEmail(Matchers.eq("nonexisting@email.com"))(any[Session]) returns(None)
+      userRepository.findByEmail("nonexisting@email.com") returns(Future.successful(None))
 
       // when
       val result = controller.authenticate()(request)
@@ -115,10 +118,10 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("Invalid email address or password.")
     }
 
-    "log in user" in new WithApplication {
+    "log in user" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
-      userRepository.findByEmail(Matchers.eq(userA.email))(any[Session]) returns(Some(userA.copy(id = Some(1))))
+      userRepository.findByEmail(Matchers.eq(userA.email)) returns(Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
       val result = controller.authenticate()(request)

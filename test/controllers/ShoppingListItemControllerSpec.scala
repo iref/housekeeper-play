@@ -3,33 +3,38 @@ package controllers
 import models._
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
-import org.specs2.specification.BeforeEach
-import play.api.db.slick.Config.driver.simple._
-import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
+import play.api.Application
+import play.api.i18n.MessagesApi
+import play.api.test.{WithApplicationLoader, FakeRequest, PlaySpecification}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 /**
  * Created by ferko on 24.3.15.
  */
-class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach with Mockito {
-
-  val shoppingListItemRepository = mock[ShoppingListItemRepository]
-
-  val shoppingListRepository = mock[ShoppingListRepository]
-
-  val controller = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository)
+class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
   val detail = ShoppingListDetail(
     ShoppingList("Test list", Some("Test description"), Some(1)),
     List()
   )
+  
+  trait WithController extends WithApplicationLoader {
+    val shoppingListItemRepository = mock[ShoppingListItemRepositoryImpl]
 
-  override def before: Any = org.mockito.Mockito.reset(shoppingListItemRepository)
+    val shoppingListRepository = mock[ShoppingListRepositoryImpl]
+    
+    private val app2MessageApi = Application.instanceCache[MessagesApi]
+
+    val controller = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository, app2MessageApi(app))
+  }
 
   "#save" should {
-    "not save item without name" in new WithApplication {
+    "not save item without name" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("quantity", "1"))
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+      shoppingListRepository.find(Matchers.eq(1)) returns Future.successful(Some(detail))
 
       // when
       val result = controller.save(1)(request)
@@ -40,10 +45,10 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"name_error")
     }
 
-    "not save item without quantity" in new WithApplication {
+    "not save item without quantity" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"))
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+      shoppingListRepository.find(Matchers.eq(1)) returns Future.successful(Some(detail))
 
       // when
       val result = controller.save(1)(request)
@@ -54,10 +59,10 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"quantity_error")
     }
 
-    "not save item with negative quantity" in new WithApplication {
+    "not save item with negative quantity" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "-1"))
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+      shoppingListRepository.find(Matchers.eq(1)) returns Future.successful(Some(detail))
 
       // when
       val result = controller.save(1)(request)
@@ -68,10 +73,10 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"quantity_error")
     }
 
-    "not save item with zero quantity" in new WithApplication {
+    "not save item with zero quantity" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "0"))
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+      shoppingListRepository.find(Matchers.eq(1)) returns Future.successful(Some(detail))
 
       // when
       val result = controller.save(1)(request)
@@ -82,10 +87,10 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"quantity_error")
     }
 
-    "not save item with negative price" in new WithApplication {
+    "not save item with negative price" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "1"), ("priceForOne", "-1.0"))
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+      shoppingListRepository.find(Matchers.eq(1)) returns Future.successful(Some(detail))
 
       // when
       val result = controller.save(1)(request)
@@ -96,12 +101,12 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"priceForOne_error")
     }
 
-    "save valid item" in new WithApplication {
+    "save valid item" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody(("name", "Super title"), ("quantity", "2"), ("priceForOne", "12.00"))
       val expectedShoppingListItem = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
-      shoppingListItemRepository.add(Matchers.eq(1), Matchers.eq(expectedShoppingListItem))(any[Session]) returns
-        (expectedShoppingListItem.copy(id = Some(2)))
+      shoppingListItemRepository.add(Matchers.eq(1), Matchers.eq(expectedShoppingListItem)) returns
+        Future.successful(expectedShoppingListItem.copy(id = Some(2)))
 
       // when
       val result = controller.save(1)(request)
@@ -114,15 +119,15 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
   }
 
   "#remove" should {
-    "remove item from repository" in new WithApplication {
+    "remove item from repository" in new WithController {
       // when
       controller.remove(1, 1)(FakeRequest())
 
       // then
-      there was one(shoppingListItemRepository).remove(Matchers.eq(1))(any[Session])
+      there was one(shoppingListItemRepository).remove(Matchers.eq(1))
     }
 
-    "redirect to shopping list detail" in new WithApplication {
+    "redirect to shopping list detail" in new WithController {
       // when
       val result = controller.remove(1, 1)(FakeRequest())
 
@@ -134,10 +139,10 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
   }
 
   "#edit" should {
-    "render editItem template" in new WithApplication {
+    "render editItem template" in new WithController {
       // given
       val item = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
-      shoppingListItemRepository.find(Matchers.eq(1))(any[Session]) returns(Some(item))
+      shoppingListItemRepository.find(Matchers.eq(1)) returns Future.successful(Some(item))
 
       // when
       val result = controller.edit(1, 1)(FakeRequest())
@@ -150,7 +155,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
   }
 
   "#update" should {
-    "not update item without name" in new WithApplication {
+    "not update item without name" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("quantity" -> "2")
 
@@ -162,7 +167,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"name_error")
     }
 
-    "not update item without quantity" in new WithApplication {
+    "not update item without quantity" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("name" -> "New title")
 
@@ -174,7 +179,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"quantity_error")
     }
 
-    "not update item with negative quantity" in new WithApplication {
+    "not update item with negative quantity" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("name" -> "New title", "quantity" -> "-1")
 
@@ -186,7 +191,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"quantity_error")
     }
 
-    "not update item with negative price for one" in new WithApplication {
+    "not update item with negative price for one" in new WithController {
       // given
       val request = FakeRequest().withFormUrlEncodedBody("name" -> "New title", "quantity" -> "1", "priceForOne" -> "-12.00")
 
@@ -199,7 +204,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       contentAsString(result) must contain("span id=\"priceForOne_error")
     }
 
-    "update existing item" in new WithApplication {
+    "update existing item" in new WithController {
       // given
       val updated = ShoppingListItem("New title", 1, Some(12.00), Some(2), Some(1))
       val request = FakeRequest().withFormUrlEncodedBody("name" -> updated.name,
@@ -214,7 +219,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with BeforeEach w
       redirectLocation(result) must beSome(routes.ShoppingListController.show(2).url)
       flash(result).get("info") must beSome[String]
 
-      there was one(shoppingListItemRepository).update(Matchers.eq(updated))(any[Session])
+      there was one(shoppingListItemRepository).update(Matchers.eq(updated))
     }
   }
 
