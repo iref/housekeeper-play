@@ -7,10 +7,11 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.db.slick._
+import play.api.i18n.I18nSupport
 import play.api.libs.Codecs
 import play.api.mvc.{Action, Controller}
 
-class UserController(userRepository: UserRepository) extends Controller {
+class UserController(userRepository: UserRepository) extends Controller with I18nSupport {
 
   import UserController._
 

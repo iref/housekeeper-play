@@ -6,9 +6,10 @@ import play.api.data.Form
 import play.api.data.Forms._
 import play.api.Play.current
 import play.api.db.slick._
+import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, Controller}
 
-class SessionController(userRepository: UserRepository) extends Controller {
+class SessionController(userRepository: UserRepository) extends Controller with I18nSupportsb {
   import SessionController._
 
   def login() = Action { implicit request =>

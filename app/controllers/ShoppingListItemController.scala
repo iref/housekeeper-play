@@ -7,10 +7,11 @@ import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.db.slick.Config.driver.simple._
 import play.api.db.slick._
+import play.api.i18n.I18nSupport
 import play.api.mvc.Controller
 
 class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
-                                 shoppingListItemRepository: ShoppingListItemRepository) extends Controller {
+                                 shoppingListItemRepository: ShoppingListItemRepository) extends Controller with I18nSupport {
 
   import ShoppingListItemController._
 

@@ -5,11 +5,12 @@ import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.db.slick._
+import play.api.i18n.I18nSupport
 import play.api.mvc.{Action, Controller}
 
 case class ShoppingListData(title: String, description: Option[String])
 
-class ShoppingListController(shoppingListRepository: ShoppingListRepository) extends Controller {
+class ShoppingListController(shoppingListRepository: ShoppingListRepository) extends Controller with I18nSupport {
 
   import ShoppingListController._
 
