@@ -28,4 +28,8 @@ libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-nop" % "1.7.12"
 )
 
+libraryDependencies ++= Seq(
+  specs2
+).map(_ % "test")
+
 routesGenerator := play.routes.compiler.InjectedRoutesGenerator
