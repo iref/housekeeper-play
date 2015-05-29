@@ -40,7 +40,7 @@ class UserController(userRepository: UserRepositoryImpl,
       userOption.map { user =>
         Ok(views.html.user.show(UserProfile(user)))
       } getOrElse {
-        Redirect(routes.Application.index()).flashing("error" -> "User profile does not exist.")
+        Redirect(routes.ApplicationController.index()).flashing("error" -> "User profile does not exist.")
       }
     }
   }
@@ -51,7 +51,7 @@ class UserController(userRepository: UserRepositoryImpl,
         val editUserData = Registration(u.name, u.email, "", "")
         Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
       } getOrElse {
-        Redirect(routes.Application.index()).flashing("error" -> "User does not exist")
+        Redirect(routes.ApplicationController.index()).flashing("error" -> "User does not exist")
       }
     }
   }

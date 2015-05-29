@@ -20,7 +20,7 @@ class SessionController(userRepository: UserRepositoryImpl, val messagesApi: Mes
   }
 
   def logout() = Action { implicit request =>
-    Redirect(routes.Application.index).withNewSession
+    Redirect(routes.ApplicationController.index).withNewSession
   }
 
   def authenticate() = Action.async { implicit rs =>
