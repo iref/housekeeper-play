@@ -1,15 +1,18 @@
 package controllers
 
-import models.UserRepository
+import models.UserRepositoryImpl
 import org.mindrot.jbcrypt.BCrypt
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.Play.current
-import play.api.db.slick._
-import play.api.i18n.I18nSupport
+import play.api.i18n.{MessagesApi, I18nSupport}
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
 
-class SessionController(userRepository: UserRepository) extends Controller with I18nSupportsb {
+import scala.concurrent.Future
+
+class SessionController(userRepository: UserRepositoryImpl, val messagesApi: MessagesApi)
+  extends Controller with I18nSupport {
+
   import SessionController._
 
   def login() = Action { implicit request =>
@@ -20,14 +23,16 @@ class SessionController(userRepository: UserRepository) extends Controller with 
     Redirect(routes.Application.index).withNewSession
   }
 
-  def authenticate() = DBAction { implicit rs =>
+  def authenticate() = Action.async { implicit rs =>
     loginForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.session.login(formWithErrors)),
+      formWithErrors => Future(BadRequest(views.html.session.login(formWithErrors))),
       login => {
-        userRepository.findByEmail(login.email)
-          .filter(u => BCrypt.checkpw(login.password, u.password))
-          .map(u => Redirect(routes.UserController.show(u.id.get)).withSession("session.username" -> u.id.get.toString))
-          .getOrElse(BadRequest(views.html.session.login(loginForm.withGlobalError("Invalid email address or password."))))
+        val userFuture = userRepository.findByEmail(login.email)
+        userFuture.map { userOption =>
+          userOption.filter(u => BCrypt.checkpw(login.password, u.password))
+            .map(u => Redirect(routes.UserController.show(u.id.get)).withSession("session.username" -> u.id.get.toString))
+            .getOrElse(BadRequest(views.html.session.login(loginForm.withGlobalError("Invalid email address or password."))))
+        }
       }
     )
   }
