@@ -1,6 +1,7 @@
 package models
 
 import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
+import play.api.libs.concurrent.Execution.Implicits._
 import slick.driver.JdbcProfile
 import slick.profile.SqlProfile.ColumnOption
 
@@ -30,6 +31,8 @@ class UserRepositoryImpl(protected val dbConfigProvider: DatabaseConfigProvider)
   import driver.api._
 
   private val users = TableQuery[UsersTable]
+
+  def all: Future[List[User]] = db.run(users.result).map(_.toList)
 
   def save(user: User): Future[User] = {
     val q = (users returning users.map(_.id)) into {
