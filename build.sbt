@@ -12,7 +12,9 @@ val slickVersion = "3.0.0"
 
 val macwireVersion = "1.0.1"
 
-resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/"
+resolvers ++= Seq(
+  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+  "Scalaz Bintray Repository" at "https://dl.bintray.com/scalaz/releases")
 
 libraryDependencies ++= Seq(
   cache,
@@ -25,7 +27,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.play" %% "play-slick" % playSlickVersion,
   "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
-  "org.slf4j" % "slf4j-nop" % "1.7.12"
+  "org.slf4j" % "slf4j-nop" % "1.7.12",
+  "com.h2database" % "h2" % "1.4.187"
 )
 
 libraryDependencies ++= Seq(
