@@ -1,9 +1,9 @@
 package models
 
+import global.HousekeeperApplicationLoader
 import org.specs2.mutable.Specification
 import play.api.Application
 import play.api.test.WithApplicationLoader
-
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -15,9 +15,9 @@ class ShoppingListItemRepositorySpec extends Specification {
 
   val shoppingList = ShoppingList("First shopping list", Some("My first awesome shopping list"))
 
-  trait WithRepository extends WithApplicationLoader {
+  class WithRepository extends WithApplicationLoader(applicationLoader = new HousekeeperApplicationLoader) {
     private val app2Repository = Application.instanceCache[ShoppingListItemRepositoryImpl]
-    val repository = app2Repository(app)
+    val shoppingListItemRepository = app2Repository(app)
 
     private val app2ShoppingListRepository = Application.instanceCache[ShoppingListRepositoryImpl]
     val shoppingListRepository = app2ShoppingListRepository(app)
@@ -29,12 +29,12 @@ class ShoppingListItemRepositorySpec extends Specification {
     val item = ShoppingListItem("Super item", 1, Some(12.0))
 
     // when
-    val returnedItem = Await.result(repository.add(id, item), 1.second)
+    val returnedItem = Await.result(shoppingListItemRepository.add(id, item), 1.second)
 
     // then
     returnedItem.id must beSome
 
-    val Some(storedItem) = Await.result(repository.find(returnedItem.id.get), 1.second)
+    val Some(storedItem) = Await.result(shoppingListItemRepository.find(returnedItem.id.get), 1.second)
 
     storedItem.id must beSome(returnedItem.id.get)
     storedItem.name must beEqualTo("Super item")
@@ -47,13 +47,13 @@ class ShoppingListItemRepositorySpec extends Specification {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
-    val Some(itemId) = Await.result(repository.add(id, item), 1.second).id
+    val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
 
     // when
-    Await.ready(repository.remove(itemId), 1.second)
+    Await.ready(shoppingListItemRepository.remove(itemId), 1.second)
 
     // then
-    val notFound = Await.result(repository.find(itemId), 1.second)
+    val notFound = Await.result(shoppingListItemRepository.find(itemId), 1.second)
     notFound must beNone
   }
 
@@ -61,13 +61,13 @@ class ShoppingListItemRepositorySpec extends Specification {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
-    val Some(itemId) = Await.result(repository.add(id, item), 1.second).id
+    val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
 
     // when
-    Await.ready(shoppingListRepository.remove(itemId + 1), 1.second)
+    Await.ready(shoppingListItemRepository.remove(itemId + 1), 1.second)
 
     // then
-    val Some(storedItem) = Await.result(shoppingListRepository.find(itemId), 1.second)
+    val Some(storedItem) = Await.result(shoppingListItemRepository.find(itemId), 1.second)
     storedItem must beEqualTo(storedItem)
   }
 
@@ -75,14 +75,14 @@ class ShoppingListItemRepositorySpec extends Specification {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
-    val Some(itemId) = Await.result(repository.add(id, item), 1.second).id
+    val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
     val updated = item.copy(name = "Updated item name", quantity = 2, id = Some(itemId))
 
     // when
-    Await.ready(repository.update(updated), 1.second)
+    Await.ready(shoppingListItemRepository.update(updated), 1.second)
 
     // then
-    val Some(foundItem) = Await.result(shoppingListRepository.find(itemId), 1.second)
+    val Some(foundItem) = Await.result(shoppingListItemRepository.find(itemId), 1.second)
     foundItem must beEqualTo(updated)
   }
 
@@ -90,10 +90,10 @@ class ShoppingListItemRepositorySpec extends Specification {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
-    val Some(itemId) = Await.result(repository.add(id, item), 1.second).id
+    val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
 
     // when
-    val Some(found) = Await.result(repository.find(itemId), 1.second)
+    val Some(found) = Await.result(shoppingListItemRepository.find(itemId), 1.second)
 
     // then
     found.id must beSome(itemId)
@@ -107,10 +107,10 @@ class ShoppingListItemRepositorySpec extends Specification {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
-    val Some(itemId) = Await.result(repository.add(id, item), 1.second).id
+    val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
 
     // when
-    val notFound = Await.result(shoppingListRepository.find(Int.MaxValue), 1.second)
+    val notFound = Await.result(shoppingListItemRepository.find(Int.MaxValue), 1.second)
 
     // then
     notFound must beNone
