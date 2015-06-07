@@ -6,7 +6,7 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.6"
 
-val playSlickVersion = "1.0.0"
+val playSlickVersion = "1.0.0-RC3"
 
 val slickVersion = "3.0.0"
 
@@ -19,6 +19,7 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   cache,
   ws,
+  "org.webjars" %% "webjars-play" % "2.4.0",
   "com.adrianhurt" %% "play-bootstrap3" % "0.4.3-P24-SNAPSHOT",
   "com.softwaremill.macwire" %% "macros" % macwireVersion,
   "com.softwaremill.macwire" %% "runtime" % macwireVersion,
