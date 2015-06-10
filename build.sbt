@@ -6,7 +6,27 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
 scalaVersion := "2.11.6"
 
-val playSlickVersion = "1.0.0"
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Xfatal-warnings",
+  "-Xlint:_",
+  "-Yno-adapted-args",
+  "-Ywarn-dead-code",
+  "-Ywarn-unused",
+  "-encoding", "UTF-8"
+)
+
+// sbt settings
+incOptions := incOptions.value.withNameHashing(true)
+updateOptions := updateOptions.value.withCachedResolution(true)
+
+// Linter settings
+wartremoverErrors ++= Warts.unsafe
+
+// we are using local build of play-slick, because evolutions aren't possible until play-slick#269 is solved
+val playSlickVersion = "1.0.1-SNAPSHOT"
 
 val slickVersion = "3.0.0"
 
