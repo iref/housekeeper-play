@@ -5,7 +5,7 @@ import models.User
 import org.mindrot.jbcrypt.BCrypt
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{MessagesApi, I18nSupport}
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Codecs
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}

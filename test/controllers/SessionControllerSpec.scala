@@ -1,12 +1,12 @@
 package controllers
 
+import global.HousekeeperComponent
 import models.User
 import org.mindrot.jbcrypt.BCrypt
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
-import play.api.Application
-import play.api.i18n.MessagesApi
 import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
+import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
 import repositories.UserRepository
 
 import scala.concurrent.Future
@@ -14,19 +14,25 @@ import scala.concurrent.Future
 class SessionControllerSpec extends PlaySpecification with Mockito {
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
+  val userRepositoryMock = mock[UserRepository]
 
-  trait WithController extends WithApplicationLoader {
-    val userRepository = mock[UserRepository]
+  class WithController extends WithApplicationLoader(applicationLoader = new SessionControllerApplicationLoader)
 
-    private val app2MessageApi = Application.instanceCache[MessagesApi]
-    val controller = new SessionController(userRepository, app2MessageApi(app))
+  class SessionControllerApplicationLoader extends ApplicationLoader {
+    override def load(context: ApplicationLoader.Context): Application = {
+      (new BuiltInComponentsFromContext(context) with SessionControllerComponents).application
+    }
+  }
+
+  trait SessionControllerComponents extends HousekeeperComponent {
+    override lazy val userRepository: UserRepository = userRepositoryMock
   }
 
   "#login" should {
 
     "render login template" in new WithController {
       // when
-      val result = controller.login()(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/login"))
 
       // then
       status(result) must beEqualTo(OK)
@@ -39,10 +45,10 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "remove username from session" in new WithController {
       // given
-      val request = FakeRequest().withSession(("session.username", "1"))
+      val request = FakeRequest(GET, "/logout").withSession(("session.username", "1"))
 
       // when
-      val result = controller.logout()(request)
+      val Some(result) = route(request)
 
       // then
       session(result).isEmpty must beTrue
@@ -50,10 +56,10 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "redirect to home page" in new WithController {
       // given
-      val request = FakeRequest().withSession("session.username" -> "1")
+      val request = FakeRequest(GET, "/logout").withSession("session.username" -> "1")
 
       // when
-      val result = controller.logout()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
@@ -65,10 +71,10 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "not log in user without email" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("password" -> "testPassword")
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("password" -> "testPassword")
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -78,10 +84,10 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "not log in user without password" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> "doe@example.com")
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> "doe@example.com")
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -91,12 +97,12 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "not log in user with invalid password" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> userA.email,
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> userA.email,
         "password" -> "totally wrong password")
-      userRepository.findByEmail(userA.email) returns(Future.successful(Some(userA)))
+      userRepositoryMock.findByEmail(userA.email) returns(Future.successful(Some(userA)))
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -106,12 +112,12 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "not log in nonexistent user" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> "nonexisting@email.com",
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> "nonexisting@email.com",
         "password" -> userA.password)
-      userRepository.findByEmail("nonexisting@email.com") returns(Future.successful(None))
+      userRepositoryMock.findByEmail("nonexisting@email.com") returns(Future.successful(None))
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -121,11 +127,11 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "log in user" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
-      userRepository.findByEmail(Matchers.eq(userA.email)) returns(Future.successful(Some(userA.copy(id = Some(1)))))
+      val request = FakeRequest("POST", "/login").withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
+      userRepositoryMock.findByEmail(Matchers.eq(userA.email)) returns(Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
