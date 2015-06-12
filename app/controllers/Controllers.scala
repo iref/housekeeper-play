@@ -1,7 +1,7 @@
 package controllers
 
-import models.{ShoppingListItemRepositoryImpl, ShoppingListRepositoryImpl, UserRepositoryImpl}
 import play.api.i18n.MessagesApi
+import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRepository}
 
 /**
  * Bootstrapping of controllers.
@@ -18,11 +18,11 @@ trait Controllers {
 
   lazy val sessionController = new SessionController(userRepository, messagesApi)
 
-  def userRepository: UserRepositoryImpl
+  def userRepository: UserRepository
 
-  def shoppingListRepository: ShoppingListRepositoryImpl
+  def shoppingListRepository: ShoppingListRepository
 
-  def shoppingListItemRepository: ShoppingListItemRepositoryImpl
+  def shoppingListItemRepository: ShoppingListItemRepository
 
   def messagesApi: MessagesApi
 

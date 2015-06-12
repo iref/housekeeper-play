@@ -1,9 +1,7 @@
-package models
+package repositories
 
-import global.HousekeeperApplicationLoader
+import models.{ShoppingList, ShoppingListItem}
 import org.specs2.mutable.Specification
-import play.api.Application
-import play.api.test.WithApplicationLoader
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -15,15 +13,7 @@ class ShoppingListItemRepositorySpec extends Specification {
 
   val shoppingList = ShoppingList("First shopping list", Some("My first awesome shopping list"))
 
-  class WithRepository extends WithApplicationLoader(applicationLoader = new HousekeeperApplicationLoader) {
-    private val app2Repository = Application.instanceCache[ShoppingListItemRepositoryImpl]
-    val shoppingListItemRepository = app2Repository(app)
-
-    private val app2ShoppingListRepository = Application.instanceCache[ShoppingListRepositoryImpl]
-    val shoppingListRepository = app2ShoppingListRepository(app)
-  }
-
-  "add item to list" in new WithRepository {
+  "add item to list" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
@@ -43,7 +33,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     storedItem.shoppingListId must beSome(id)
   }
 
-  "remove item from list" in new WithRepository {
+  "remove item from list" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
@@ -57,7 +47,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     notFound must beNone
   }
 
-  "not remove any item if id does not exist" in new WithRepository {
+  "not remove any item if id does not exist" in new Database{
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
@@ -71,7 +61,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     storedItem must beEqualTo(storedItem)
   }
 
-  "newList existing item" in new WithRepository {
+  "newList existing item" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
@@ -86,7 +76,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     foundItem must beEqualTo(updated)
   }
 
-  "find existing item by id" in new WithRepository {
+  "find existing item by id" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
@@ -103,7 +93,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     found.shoppingListId must beEqualTo(id)
   }
 
-  "return None if item with id does not exist" in new WithRepository {
+  "return None if item with id does not exist" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))

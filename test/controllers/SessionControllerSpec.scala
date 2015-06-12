@@ -1,12 +1,13 @@
 package controllers
 
-import models.{User, UserRepositoryImpl}
+import models.User
 import org.mindrot.jbcrypt.BCrypt
-import org.mockito.{Matchers, Mockito => m}
+import org.mockito.Matchers
 import org.specs2.mock.Mockito
 import play.api.Application
 import play.api.i18n.MessagesApi
 import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
+import repositories.UserRepository
 
 import scala.concurrent.Future
 
@@ -15,7 +16,7 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
 
   trait WithController extends WithApplicationLoader {
-    val userRepository = mock[UserRepositoryImpl]
+    val userRepository = mock[UserRepository]
 
     private val app2MessageApi = Application.instanceCache[MessagesApi]
     val controller = new SessionController(userRepository, app2MessageApi(app))

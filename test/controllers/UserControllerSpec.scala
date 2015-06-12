@@ -1,14 +1,14 @@
 package controllers
 
-import models.{User, UserRepositoryImpl}
+import models.User
 import org.mindrot.jbcrypt.BCrypt
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
 import play.api.Application
 import play.api.i18n.MessagesApi
 import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
+import repositories.UserRepository
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 class UserControllerSpec extends PlaySpecification with Mockito {
@@ -16,7 +16,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
   trait WithController extends WithApplicationLoader {
-    val userRepository = mock[UserRepositoryImpl]
+    val userRepository = mock[UserRepository]
 
     private val app2MessageApi = Application.instanceCache[MessagesApi]
 

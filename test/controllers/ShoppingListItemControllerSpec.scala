@@ -1,13 +1,13 @@
 package controllers
 
-import models._
+import models.{ShoppingList, ShoppingListDetail, ShoppingListItem}
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
 import play.api.Application
 import play.api.i18n.MessagesApi
-import play.api.test.{WithApplicationLoader, FakeRequest, PlaySpecification}
+import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
+import repositories.{ShoppingListItemRepository, ShoppingListRepository}
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 /**
@@ -21,9 +21,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
   )
   
   trait WithController extends WithApplicationLoader {
-    val shoppingListItemRepository = mock[ShoppingListItemRepositoryImpl]
+    val shoppingListItemRepository = mock[ShoppingListItemRepository]
 
-    val shoppingListRepository = mock[ShoppingListRepositoryImpl]
+    val shoppingListRepository = mock[ShoppingListRepository]
     
     private val app2MessageApi = Application.instanceCache[MessagesApi]
 

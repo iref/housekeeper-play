@@ -1,23 +1,18 @@
-package models
+package repositories
 
+import models.User
 import org.specs2.mutable.Specification
-import play.api.Application
-import play.api.test.WithApplicationLoader
+
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class UserRepositorySpec extends Specification {
 
   val userA = User("John Doe", "doe@example.com", "test_password")
-  
-  trait WithRepository extends WithApplicationLoader {
-    private val app2Repository = Application.instanceCache[UserRepositoryImpl]
-    val userRepository = app2Repository(app)
-  }
 
   "UserRepository" should {
 
-    "save new user" in new WithRepository {
+    "save new user" in new Database {
       // when
       val Some(id) = Await.result(userRepository.save(userA), 1.second).id
 
@@ -29,7 +24,7 @@ class UserRepositorySpec extends Specification {
       found.password must beEqualTo(userA.password)
     }
 
-    "return all users" in new WithRepository {
+    "return all users" in new Database {
       // when
       Await.ready(userRepository.save(userA), 1.second)
 
@@ -37,7 +32,7 @@ class UserRepositorySpec extends Specification {
       users must have size(1)
     }
 
-    "find existing user by id" in new WithRepository {
+    "find existing user by id" in new Database {
       // given
       val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
 
@@ -51,7 +46,7 @@ class UserRepositorySpec extends Specification {
       found.password must beEqualTo(userA.password)
     }
 
-    "find nonexistent user returns None" in new WithRepository {
+    "find nonexistent user returns None" in new Database {
       // given
       Await.ready(userRepository.save(userA), 1.second)
 
@@ -62,7 +57,7 @@ class UserRepositorySpec extends Specification {
       notFound must beNone
     }
 
-    "find existing user by email" in new WithRepository {
+    "find existing user by email" in new Database {
       // given
       val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
 
@@ -76,7 +71,7 @@ class UserRepositorySpec extends Specification {
       found.password must beEqualTo(userA.password)
     }
 
-    "findByEmail returns None if user does not exist" in new WithRepository {
+    "findByEmail returns None if user does not exist" in new Database {
       // given
       Await.ready(userRepository.save(userA), 1.second)
 
@@ -87,7 +82,7 @@ class UserRepositorySpec extends Specification {
       notFound must beNone
     }
 
-    "update existing user" in new WithRepository {
+    "update existing user" in new Database {
       // given
       val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
       val toUpdate = userA.copy(id = Some(userId), name = "New awesome name", email = "new@example.com", password = "newTestPassword")
@@ -103,7 +98,7 @@ class UserRepositorySpec extends Specification {
       updated.id must beSome(userId)
     }
 
-    "not update user without id" in new WithRepository {
+    "not update user without id" in new Database {
       // given
       Await.ready(userRepository.save(userA), 1.second)
       val toUpdate = userA.copy(name = "User without id", email = "newemail@example.com", password = "newTestPassword")
@@ -121,7 +116,7 @@ class UserRepositorySpec extends Specification {
       updated.password must beEqualTo(userA.password)
     }
 
-    "not update other users" in new WithRepository {
+    "not update other users" in new Database {
       // given
       Await.ready(userRepository.save(userA), 1.second)
       val toUpdate = userA.copy(name = "Nonexistent user", email = "nonexistent@example.com",
