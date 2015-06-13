@@ -18,8 +18,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.0")
 addSbtPlugin("com.typesafe.sbt" % "sbt-mocha" % "1.0.2")
 
 // Scala linter
-addSbtPlugin("org.brianmckenna" % "sbt-wartremover" % "0.13")
-
 addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.7.0")
 
 // Dependency updates plugin
