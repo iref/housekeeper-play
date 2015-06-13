@@ -63,7 +63,7 @@ class UserController(userRepository: UserRepository,
         Future(BadRequest(views.html.user.edit(id, formWithErrors)))
       },
       data => {
-        val updatedUser = User(data.name, data.email, BCrypt.hashpw(data.password, BCrypt.gensalt()), Some(id))
+        val updatedUser = User(data.name, data.email, BCrypt.hashpw(data.password, BCrypt.gensalt()), Option(id))
         userRepository.update(updatedUser).map(_ => Redirect(routes.UserController.show(id)))
       }
     )
