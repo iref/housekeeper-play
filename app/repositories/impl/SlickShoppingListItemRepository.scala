@@ -1,7 +1,9 @@
-package repositories
+package repositories.impl
 
-import models.{ShoppingListItem, ShoppingListItemsTable}
-import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
+import models.ShoppingListItem
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import repositories.ShoppingListItemRepository
+import repositories.impl.tables.ShoppingListItemsTable
 import slick.driver.JdbcProfile
 
 import scala.concurrent.Future
@@ -10,8 +12,6 @@ private[repositories] class SlickShoppingListItemRepository(protected val dbConf
   extends HasDatabaseConfigProvider[JdbcProfile] with ShoppingListItemRepository with ShoppingListItemsTable {
 
   import driver.api._
-
-  private val shoppingListItems = TableQuery[ShoppingListItems]
 
   def add(id: Int, item: ShoppingListItem): Future[ShoppingListItem] = {
     val withListId = item.copy(shoppingListId = Some(id))

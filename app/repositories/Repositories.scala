@@ -1,6 +1,7 @@
 package repositories
 
 import play.api.db.slick.DatabaseConfigProvider
+import repositories.impl.{SlickShoppingListItemRepository, SlickShoppingListRepository, SlickUserRepository}
 
 /**
  * Trait provides repositories implementations.

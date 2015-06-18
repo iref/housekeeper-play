@@ -1,10 +1,12 @@
-package repositories
+package repositories.impl
 
-import models.{ShoppingList, ShoppingListDetail, ShoppingListItemsTable, ShoppingListTable}
-import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
+import models.{ShoppingList, ShoppingListDetail}
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import repositories.ShoppingListRepository
+import repositories.impl.tables.{ShoppingListItemsTable, ShoppingListTable}
 import slick.driver.JdbcProfile
 
-import scala.concurrent.ExecutionContext.Implicits.global // TODO use actual execution context here
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 private[repositories] class SlickShoppingListRepository(protected val dbConfigProvider: DatabaseConfigProvider)
@@ -12,9 +14,6 @@ private[repositories] class SlickShoppingListRepository(protected val dbConfigPr
   with ShoppingListTable with ShoppingListItemsTable {
 
   import driver.api._
-
-  private val shoppingLists = TableQuery[ShoppingLists]
-  private val shoppingListItems = TableQuery[ShoppingListItems]
 
   def all: Future[List[ShoppingList]] = db.run(shoppingLists.result.map(_.toList))
 

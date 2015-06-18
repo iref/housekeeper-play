@@ -61,12 +61,12 @@ class ShoppingListItemRepositorySpec extends Specification {
     storedItem must beEqualTo(storedItem)
   }
 
-  "newList existing item" in new Database {
+  "update existing item" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))
     val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
-    val updated = item.copy(name = "Updated item name", quantity = 2, id = Some(itemId))
+    val updated = item.copy(name = "Updated item name", quantity = 2, shoppingListId = Some(id), id = Some(itemId))
 
     // when
     Await.ready(shoppingListItemRepository.update(updated), 1.second)
@@ -74,6 +74,23 @@ class ShoppingListItemRepositorySpec extends Specification {
     // then
     val Some(foundItem) = Await.result(shoppingListItemRepository.find(itemId), 1.second)
     foundItem must beEqualTo(updated)
+  }
+
+  "not update any other item" in new Database {
+    // given
+    val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
+    val item = ShoppingListItem("Super item", 1, Some(12.0))
+    val Some(itemId) = Await.result(shoppingListItemRepository.add(id, item), 1.second).id
+    val item2 = ShoppingListItem("Super item 2", 1, Some(10.0), Some(id))
+    val Some(itemId2) = Await.result(shoppingListItemRepository.add(id, item2), 1.second).id
+    val updated = item.copy(name = "Updated item name", quantity = 2, shoppingListId = Some(id), id = Some(itemId))
+
+    // when
+    Await.ready(shoppingListItemRepository.update(updated), 1.second)
+
+    // then
+    val Some(foundItem) = Await.result(shoppingListItemRepository.find(itemId2), 1.second)
+    foundItem must beEqualTo(item2.copy(id = Some(itemId2)))
   }
 
   "find existing item by id" in new Database {
@@ -90,7 +107,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     found.name must beEqualTo("Super item")
     found.priceForOne must beSome(12.0)
     found.quantity must beEqualTo(1)
-    found.shoppingListId must beEqualTo(id)
+    found.shoppingListId must beSome(id)
   }
 
   "return None if item with id does not exist" in new Database {
