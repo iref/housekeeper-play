@@ -16,4 +16,6 @@ trait Repositories {
 
   lazy val userRepository: UserRepository = new SlickUserRepository(dbConfigProvider)
 
+  lazy val householdRepository: HouseholdRepository = ???
+
 }

@@ -18,7 +18,7 @@ private[impl] trait ShoppingListItemsTable extends ShoppingListTable {
 
     def * = (name, quantity, pricePerItem, shoppingListId, id) <> ((ShoppingListItem.apply _).tupled, ShoppingListItem.unapply)
 
-    def shoppingList = foreignKey("SHOPPING_LIST_FK", shoppingListId, TableQuery[ShoppingLists])(_.id)
+    def shoppingList = foreignKey("SHOPPING_LIST_FK", shoppingListId, shoppingLists)(_.id)
   }
 
   protected val shoppingListItems = TableQuery[ShoppingListItems]
