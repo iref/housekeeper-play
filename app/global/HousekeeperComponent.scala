@@ -34,5 +34,9 @@ trait HousekeeperComponent extends BuiltInComponents with SlickComponents
 
   lazy val dynamicEvolutions: DynamicEvolutions = new DynamicEvolutions
 
-  applicationEvolutions
+  def onStart() = {
+    applicationEvolutions
+  }
+
+  onStart()
 }
