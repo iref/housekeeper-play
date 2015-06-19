@@ -8,8 +8,6 @@ import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
  */
 class HousekeeperApplicationLoader extends ApplicationLoader {
   override def load(context: Context): Application = {
-    new HousekeeperApplication(context).application
+    (new BuiltInComponentsFromContext(context) with HousekeeperComponent).application
   }
-
-  class HousekeeperApplication(context: Context) extends BuiltInComponentsFromContext(context) with HousekeeperComponent
 }
