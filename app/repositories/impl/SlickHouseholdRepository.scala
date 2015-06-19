@@ -9,7 +9,7 @@ import slick.driver.JdbcProfile
 import scala.concurrent.Future
 
 private[repositories] class SlickHouseholdRepository(protected val dbConfigProvider: DatabaseConfigProvider)
-  extends HouseholdRepository with HasDatabaseConfigProvider[JdbcProfile] with HouseholdsTable {
+  extends HasDatabaseConfigProvider[JdbcProfile] with HouseholdRepository with HouseholdsTable {
 
   import driver.api._
 
@@ -18,5 +18,11 @@ private[repositories] class SlickHouseholdRepository(protected val dbConfigProvi
     db.run(query.result.headOption)
   }
 
-  def save(household: Household): Future[Household] = ???
+  def save(household: Household): Future[Household] = {
+    val returnIdQuery = (households returning households.map(_.id)) into {
+      case (row, id) => household.copy(id = id)
+    }
+    val insert = returnIdQuery += household
+    db.run(insert.transactionally)
+  }
 }

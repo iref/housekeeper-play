@@ -1,7 +1,7 @@
 package repositories
 
 import play.api.db.slick.DatabaseConfigProvider
-import repositories.impl.{SlickShoppingListItemRepository, SlickShoppingListRepository, SlickUserRepository}
+import repositories.impl.{SlickHouseholdRepository, SlickShoppingListItemRepository, SlickShoppingListRepository, SlickUserRepository}
 
 /**
  * Trait provides repositories implementations.
@@ -16,6 +16,6 @@ trait Repositories {
 
   lazy val userRepository: UserRepository = new SlickUserRepository(dbConfigProvider)
 
-  lazy val householdRepository: HouseholdRepository = ???
+  lazy val householdRepository: HouseholdRepository = new SlickHouseholdRepository(dbConfigProvider)
 
 }
