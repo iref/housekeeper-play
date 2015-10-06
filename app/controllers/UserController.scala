@@ -1,16 +1,20 @@
 package controllers
 
 import com.google.common.base.Charsets
-import models.{User, UserRepository}
+import models.User
 import org.mindrot.jbcrypt.BCrypt
-import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.db.slick._
+import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.Codecs
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
+import repositories.UserRepository
 
-class UserController(userRepository: UserRepository) extends Controller {
+import scala.concurrent.Future
+
+class UserController(userRepository: UserRepository,
+                     val messagesApi: MessagesApi) extends Controller with I18nSupport {
 
   import UserController._
 
@@ -18,50 +22,49 @@ class UserController(userRepository: UserRepository) extends Controller {
     Ok(views.html.user.newUser(registrationForm))
   }
 
-  def save() = DBAction { implicit rs =>
+  def save() = Action.async { implicit rs =>
     registrationForm.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.user.newUser(formWithErrors)),
+      formWithErrors => Future(BadRequest(views.html.user.newUser(formWithErrors))),
       data => {
-        val newUser = userRepository.save(data.toUser)
-        Redirect(routes.UserController.show(newUser.id.get))
-          .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
-          .withSession("session.username" -> newUser.id.get.toString)
+        userRepository.save(data.toUser).map { newUser =>
+          Redirect(routes.UserController.show(newUser.id.get))
+            .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
+            .withSession("session.username" -> newUser.id.get.toString)
+        }
       }
     )
   }
 
-  def show(id: Int) = DBAction { implicit rs =>
-    userRepository.find(id).map { u =>
-      Ok(views.html.user.show(UserProfile(u)))
-    } getOrElse {
-      Redirect(routes.Application.index()).flashing("error" -> "User profile does not exist.")
+  def show(id: Int) = Action.async { implicit rs =>
+    val userFuture = userRepository.find(id)
+    userFuture.map { userOption =>
+      userOption.map { user =>
+        Ok(views.html.user.show(UserProfile(user)))
+      } getOrElse {
+        Redirect(routes.ApplicationController.index()).flashing("error" -> "User profile does not exist.")
+      }
     }
   }
 
-  def edit(id: Int) = DBAction { implicit rs =>
-    userRepository.find(id).map { u =>
-      val editUserData = EditUserFormData(u.name, u.email, None, None)
-      Ok(views.html.user.edit(id, editUserForm.fill(editUserData)))
-    } getOrElse {
-      Redirect(routes.Application.index()).flashing("error" -> "User does not exist")
+  def edit(id: Int) = Action.async { implicit rs =>
+    userRepository.find(id).map { userOption =>
+      userOption.map { u =>
+        val editUserData = Registration(u.name, u.email, "", "")
+        Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
+      } getOrElse {
+        Redirect(routes.ApplicationController.index()).flashing("error" -> "User does not exist")
+      }
     }
   }
 
-  def update(id: Int) = DBAction { implicit rs =>
-    editUserForm.bindFromRequest.fold(
+  def update(id: Int) = Action.async { implicit rs =>
+    registrationForm.bindFromRequest.fold(
       formWithErrors => {
-        BadRequest(views.html.user.edit(id, formWithErrors))
+        Future(BadRequest(views.html.user.edit(id, formWithErrors)))
       },
       data => {
-        data.password.map { p =>
-          User(data.name, data.email, BCrypt.hashpw(p, BCrypt.gensalt()), Some(id))
-        } orElse {
-          userRepository.find(id).map(u => u.copy(name = data.name, email = data.email))
-        } foreach { user =>
-          userRepository.update(user)
-        }
-
-        Redirect(routes.UserController.show(id))
+        val updatedUser = User(data.name, data.email, BCrypt.hashpw(data.password, BCrypt.gensalt()), Option(id))
+        userRepository.update(updatedUser).map(_ => Redirect(routes.UserController.show(id)))
       }
     )
   }
@@ -96,17 +99,4 @@ object UserController {
   object UserProfile {
     def apply(user: User): UserProfile = UserProfile(user.name, user.email)
   }
-
-  case class EditUserFormData(name: String, email: String, password: Option[String], passwordConfirmation: Option[String])
-
-  val editUserForm = Form(
-   mapping(
-     "name" -> nonEmptyText(1, 30),
-     "email" -> email,
-     "password" -> optional(nonEmptyText(6)),
-     "passwordConfirmation" -> optional(nonEmptyText(6))
-   )(EditUserFormData.apply)(EditUserFormData.unapply) verifying("Password does not match with confirmation", { formData =>
-     formData.password == formData.passwordConfirmation
-   })
-  )
 }

@@ -1,43 +1,56 @@
 package controllers
 
-import models.{ShoppingListItem, ShoppingListDetail, ShoppingList, ShoppingListRepository}
-import org.mockito.Matchers
+import global.HousekeeperComponent
+import models.{ShoppingListItem, ShoppingList, ShoppingListDetail}
 import org.specs2.mock.Mockito
-import org.specs2.specification.BeforeEach
-import play.api.db.DB
-import play.api.db.slick.Config.driver.simple._
-import play.api.test.{FakeRequest, PlaySpecification, WithApplication}
+import play.api.ApplicationLoader.Context
+import play.api.{BuiltInComponentsFromContext, ApplicationLoader, Application}
+import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
+import repositories.ShoppingListRepository
 
-class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with Mockito {
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
-  val shoppingListRepository = mock[ShoppingListRepository]
-  val controller = new ShoppingListController(shoppingListRepository)
+class ShoppingListControllerSpec extends PlaySpecification with Mockito {
+
+  val shoppingListRepositoryMock = mock[ShoppingListRepository]
+
   val detail = ShoppingListDetail(
     ShoppingList("Test list", Some("Test description"), Some(1)),
     List()
   )
 
-  override def before: Any = org.mockito.Mockito.reset(shoppingListRepository)
+  class WithController extends WithApplicationLoader(applicationLoader = new ShoppingListControllerTestLoader)
+
+  trait ShoppingListControllerTestComponents extends HousekeeperComponent {
+    override lazy val shoppingListRepository = shoppingListRepositoryMock
+  }
+
+  class ShoppingListControllerTestLoader extends ApplicationLoader {
+    override def load(context: Context): Application = {
+      (new BuiltInComponentsFromContext(context) with ShoppingListControllerTestComponents).application
+    }
+  }
 
   "#index" should {
-    "render shopping list template" in new WithApplication {
+    "render shopping list template" in new WithController {
       // given
-      shoppingListRepository.all(any[Session]) returns List()
+      shoppingListRepositoryMock.all returns Future.successful(List())
 
       // when
-      val result = controller.index()(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists"))
 
       status(result) must equalTo(OK)
       contentType(result) must beSome("text/html")
       contentAsString(result) must contain("Shopping Lists")
     }
 
-    "render info message if there aren't any shopping lists" in new WithApplication {
+    "render info message if there aren't any shopping lists" in new WithController {
       // given
-      shoppingListRepository.all(any[Session]) returns List()
+      shoppingListRepositoryMock.all returns Future.successful(List())
 
       // when
-      val result = controller.index()(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists"))
 
       // then
       status(result) must equalTo(OK)
@@ -45,15 +58,15 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain("No shopping lists were created yet.")
     }
 
-    "render all shopping lists" in new WithApplication {
+    "render all shopping lists" in new WithController {
       // given
       val shoppingLists = List(
         ShoppingList("First list", Some("Newbie list"), Some(1)),
         ShoppingList("Second list", Some("My awesome list"), Some(2)))
-      shoppingListRepository.all(any[Session]) returns shoppingLists
+      shoppingListRepositoryMock.all returns Future.successful(shoppingLists)
 
       // when
-      val result = controller.index()(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists"))
 
       // then
       status(result) must equalTo(OK)
@@ -67,12 +80,12 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
 
   "#show" should {
 
-    "render shopping list detail template" in new WithApplication {
+    "render shopping list detail template" in new WithController {
       // given
-      shoppingListRepository.find(any[Int])(any[Session]) returns(None)
+      shoppingListRepositoryMock.find(1) returns Future.successful(None)
 
       // when
-      val result = controller.show(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1"))
 
       // then
       status(result) must equalTo(OK)
@@ -80,12 +93,12 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain ("Shopping List Detail | Housekeeper")
     }
 
-    "render message if shopping detail doesn't exists" in new WithApplication {
+    "render message if shopping detail doesn't exists" in new WithController {
       // given
-      shoppingListRepository.find(any[Int])(any[Session]) returns(None)
+      shoppingListRepositoryMock.find(1) returns Future.successful(None)
 
       // when
-      val result = controller.show(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1"))
 
       // then
       status(result) must equalTo(OK)
@@ -93,7 +106,7 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain ("Shopping list was not found.")
     }
 
-    "render shopping list detail" in new WithApplication {
+    "render shopping list detail" in new WithController {
       // given
       val shoppingListDetail = ShoppingListDetail(
         ShoppingList("First list", Some("Newbie list"), Some(1)),
@@ -102,10 +115,10 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
           ShoppingListItem("Macbook Air 13", 1, Some(1000.0), Some(1), Some(2))
         )
       )
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns Some(shoppingListDetail)
+      shoppingListRepositoryMock.find(1) returns Future.successful(Some(shoppingListDetail))
 
       // when
-      val result = controller.show(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1"))
 
       // then
       status(result) must equalTo(OK)
@@ -121,9 +134,9 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "#newList" should {
-    "render newList template" in {
+    "render newList template" in new WithController {
       // when
-      val result = controller.newList()(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/new"))
 
       // then
       status(result) must equalTo(OK)
@@ -133,12 +146,12 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "#save" should {
-    "not save shopping list without title" in new WithApplication {
+    "not save shopping list without title" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"))
+      val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(("description", "testdescription"))
 
       // when
-      val result = controller.save()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must equalTo(BAD_REQUEST)
@@ -146,14 +159,14 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain("span id=\"title_error")
     }
 
-    "redirect with error message if saving fails" in new WithApplication {
+    "redirect with error message if saving fails" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
+      val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
       val newShoppingList = ShoppingList("Test", Some("Test description"))
-      shoppingListRepository.save(Matchers.eq(newShoppingList))(any[Session]) returns(newShoppingList)
+      shoppingListRepositoryMock.save(newShoppingList) returns Future.successful(newShoppingList)
 
       // when
-      val result = controller.save()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must equalTo(SEE_OTHER)
@@ -161,14 +174,17 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       flash(result).get("error") must beSome
     }
 
-    "save valid shopping list" in new WithApplication {
+    "save valid shopping list" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody(("description", "testdescription"), ("title", "test"))
+      val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(
+        "description" -> "testdescription",
+        "title" -> "test"
+      )
       val expectedShoppingList = ShoppingList("test", Some("testdescription"))
-      shoppingListRepository.save(Matchers.eq(expectedShoppingList))(any[Session]) returns(expectedShoppingList.copy(id = Some(1)))
+      shoppingListRepositoryMock.save(expectedShoppingList) returns Future.successful(expectedShoppingList.copy(id = Some(1)))
 
       // when
-      val result = controller.save()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must equalTo(SEE_OTHER)
@@ -178,17 +194,20 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "#delete" should {
-    "remove list from repository" in new WithApplication {
+    "remove list from repository" in new WithController {
       // when
-      controller.delete(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/delete"))
+      Await.ready(result, 1.second)
 
       // then
-      there was one(shoppingListRepository).remove(Matchers.eq(1))(any[Session])
+      there was one(shoppingListRepositoryMock).remove(1)
     }
 
-    "redirect to shopping list index" in new WithApplication {
+    "redirect to shopping list index" in new WithController {
+      shoppingListRepositoryMock.remove(1) returns Future.successful(1)
+
       // when
-      val result = controller.delete(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/delete"))
 
       // then
       status(result) must equalTo(SEE_OTHER)
@@ -198,12 +217,12 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "#edit" should {
-    "render edit template" in new WithApplication {
+    "render edit template" in new WithController {
       // given
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(Some(detail))
+      shoppingListRepositoryMock.find(1) returns Future.successful(Some(detail))
 
       // when
-      val result = controller.edit(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/edit"))
 
       // then
       status(result) must beEqualTo(OK)
@@ -211,12 +230,12 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain("Edit shopping list")
     }
 
-    "redirect to shopping list index if list was not found" in new WithApplication {
+    "redirect to shopping list index if list was not found" in new WithController {
       // given
-      shoppingListRepository.find(Matchers.eq(1))(any[Session]) returns(None)
+      shoppingListRepositoryMock.find(1) returns Future.successful(None)
 
       // when
-      val result = controller.edit(1)(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/edit"))
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
@@ -226,12 +245,12 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
   }
 
   "#update" should {
-    "not update list without title" in new WithApplication {
+    "not update list without title" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("description" -> "New test description")
+      val request = FakeRequest(POST, "/shopping-lists/1/edit").withFormUrlEncodedBody("description" -> "New test description")
 
       // when
-      val result = controller.update(1)(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -239,18 +258,23 @@ class ShoppingListControllerSpec extends PlaySpecification with BeforeEach with 
       contentAsString(result) must contain("span id=\"title_error")
     }
 
-    "update existing list" in new WithApplication {
+    "update existing list" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("title" -> "New updated title",
-        "description" -> "New update description")
+      val request = FakeRequest(POST, "/shopping-lists/1/edit").withFormUrlEncodedBody(
+        "title" -> "New updated title",
+        "description" -> "New update description"
+      )
+      val toUpdate = ShoppingList("New updated title", Option("New update description"), Option(1))
+      shoppingListRepositoryMock.update(toUpdate) returns Future.successful(1)
 
       // when
-      val result = controller.update(1)(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
       flash(result).get("info") must beSome
+      there was one(shoppingListRepositoryMock).update(toUpdate)
     }
   }
 

@@ -1,28 +1,38 @@
 package controllers
 
-import models.{User, UserRepository}
+import global.HousekeeperComponent
+import models.User
 import org.mindrot.jbcrypt.BCrypt
-import org.mockito.{Mockito => m, Matchers}
+import org.mockito.Matchers
 import org.specs2.mock.Mockito
-import org.specs2.specification.BeforeEach
-import play.api.db.slick._
-import play.api.mvc.AnyContentAsEmpty
-import play.api.test.{FakeRequest, WithApplication, PlaySpecification}
+import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
+import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
+import repositories.UserRepository
 
-class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEach {
+import scala.concurrent.Future
+
+class SessionControllerSpec extends PlaySpecification with Mockito {
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
-  val userRepository = mock[UserRepository]
+  val userRepositoryMock = mock[UserRepository]
 
-  val controller = new SessionController(userRepository)
+  class WithController extends WithApplicationLoader(applicationLoader = new SessionControllerApplicationLoader)
 
-  override def before: Any = m.reset(userRepository)
+  class SessionControllerApplicationLoader extends ApplicationLoader {
+    override def load(context: ApplicationLoader.Context): Application = {
+      (new BuiltInComponentsFromContext(context) with SessionControllerComponents).application
+    }
+  }
+
+  trait SessionControllerComponents extends HousekeeperComponent {
+    override lazy val userRepository: UserRepository = userRepositoryMock
+  }
 
   "#login" should {
 
-    "render login template" in new WithApplication {
+    "render login template" in new WithController {
       // when
-      val result = controller.login()(FakeRequest())
+      val Some(result) = route(FakeRequest(GET, "/login"))
 
       // then
       status(result) must beEqualTo(OK)
@@ -33,23 +43,23 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
 
   "#logout" should {
 
-    "remove username from session" in new WithApplication {
+    "remove username from session" in new WithController {
       // given
-      val request = FakeRequest().withSession(("session.username", "1"))
+      val request = FakeRequest(GET, "/logout").withSession(("session.username", "1"))
 
       // when
-      val result = controller.logout()(request)
+      val Some(result) = route(request)
 
       // then
       session(result).isEmpty must beTrue
     }
 
-    "redirect to home page" in new WithApplication {
+    "redirect to home page" in new WithController {
       // given
-      val request = FakeRequest().withSession("session.username" -> "1")
+      val request = FakeRequest(GET, "/logout").withSession("session.username" -> "1")
 
       // when
-      val result = controller.logout()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
@@ -59,12 +69,12 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
 
   "#authenticate" should {
 
-    "not log in user without email" in new WithApplication {
+    "not log in user without email" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("password" -> "testPassword")
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("password" -> "testPassword")
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -72,12 +82,12 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("span id=\"email_error")
     }
 
-    "not log in user without password" in new WithApplication {
+    "not log in user without password" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> "doe@example.com")
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> "doe@example.com")
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -85,14 +95,14 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("span id=\"password_error")
     }
 
-    "not log in user with invalid password" in new WithApplication {
+    "not log in user with invalid password" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> userA.email,
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> userA.email,
         "password" -> "totally wrong password")
-      userRepository.findByEmail(Matchers.eq(userA.email))(any[Session]) returns(Some(userA))
+      userRepositoryMock.findByEmail(userA.email) returns(Future.successful(Some(userA)))
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -100,14 +110,14 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("Invalid email address or password.")
     }
 
-    "not log in nonexistent user" in new WithApplication {
+    "not log in nonexistent user" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> "nonexisting@email.com",
+      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> "nonexisting@email.com",
         "password" -> userA.password)
-      userRepository.findByEmail(Matchers.eq("nonexisting@email.com"))(any[Session]) returns(None)
+      userRepositoryMock.findByEmail("nonexisting@email.com") returns(Future.successful(None))
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(BAD_REQUEST)
@@ -115,13 +125,13 @@ class SessionControllerSpec extends PlaySpecification with Mockito with BeforeEa
       contentAsString(result) must contain("Invalid email address or password.")
     }
 
-    "log in user" in new WithApplication {
+    "log in user" in new WithController {
       // given
-      val request = FakeRequest().withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
-      userRepository.findByEmail(Matchers.eq(userA.email))(any[Session]) returns(Some(userA.copy(id = Some(1))))
+      val request = FakeRequest("POST", "/login").withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
+      userRepositoryMock.findByEmail(Matchers.eq(userA.email)) returns(Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
-      val result = controller.authenticate()(request)
+      val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)

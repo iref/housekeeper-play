@@ -1,69 +1,77 @@
 package controllers
 
-import models.{ShoppingList, ShoppingListRepository}
-import play.api.Play.current
+import models.ShoppingList
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.db.slick._
+import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
+import repositories.ShoppingListRepository
+
+import scala.concurrent.Future
 
 case class ShoppingListData(title: String, description: Option[String])
 
-class ShoppingListController(shoppingListRepository: ShoppingListRepository) extends Controller {
+class ShoppingListController(shoppingListRepository: ShoppingListRepository, val messagesApi: MessagesApi)
+  extends Controller with I18nSupport {
 
   import ShoppingListController._
 
-  def index = DBAction { implicit rs =>
-    val shoppingLists = shoppingListRepository.all
-    Ok(views.html.shoppingList.index(shoppingLists))
+  def index = Action.async { implicit rs =>
+    shoppingListRepository.all.map(shoppingLists => Ok(views.html.shoppingList.index(shoppingLists)))
   }
 
-  def show(id: Int) = DBAction { implicit rs =>
-    val shoppingListDetail = shoppingListRepository.find(id)
-    Ok(views.html.shoppingList.show(shoppingListDetail, ShoppingListItemController.form))
+  def show(id: Int) = Action.async { implicit rs =>
+    shoppingListRepository.find(id).map { shoppingListOption =>
+      Ok(views.html.shoppingList.show(shoppingListOption, ShoppingListItemController.form))
+    }
   }
 
   def newList() = Action { implicit request =>
     Ok(views.html.shoppingList.newList(form))
   }
 
-  def save() = DBAction { implicit rs =>
+  def save() = Action.async { implicit rs =>
     form.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.shoppingList.newList(formWithErrors)),
+      formWithErrors => Future(BadRequest(views.html.shoppingList.newList(formWithErrors))),
       shoppingListData => {
         val shoppingList = ShoppingList(shoppingListData.title, shoppingListData.description)
-        val savedShoppingList = shoppingListRepository.save(shoppingList)
-        savedShoppingList.id.map { idVal =>
-          Redirect(routes.ShoppingListController.show(idVal))
-        } getOrElse {
-          Redirect(routes.ShoppingListController.index()).flashing("error" -> "Error while saving newList shopping list")
+        shoppingListRepository.save(shoppingList).map { saved =>
+          saved.id.map { idVal =>
+            Redirect(routes.ShoppingListController.show(idVal))
+          } getOrElse {
+            Redirect(routes.ShoppingListController.index()).flashing("error" -> "Error while saving newList shopping list")
+          }
         }
       }
     )
   }
 
-  def delete(id: Int) = DBAction { implicit rs =>
-    shoppingListRepository.remove(id)
-    Redirect(routes.ShoppingListController.index()).flashing("info" -> "Shopping list was removed.")
-  }
-
-  def edit(id: Int) = DBAction { implicit rs =>
-    val detail = shoppingListRepository.find(id)
-    detail.map{ d =>
-      val formData = FormData(d.shoppingList.title, d.shoppingList.description)
-      Ok(views.html.shoppingList.edit(id, form.fill(formData)))
-    } getOrElse {
-      Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist.")
+  def delete(id: Int) = Action.async { implicit rs =>
+    shoppingListRepository.remove(id).map { _ =>
+      Redirect(routes.ShoppingListController.index()).flashing("info" -> "Shopping list was removed.")
     }
   }
 
-  def update(id: Int) = DBAction { implicit rs =>
+  def edit(id: Int) = Action.async { implicit rs =>
+    shoppingListRepository.find(id).map { detailOption =>
+      detailOption.map{ detail =>
+        val formData = FormData(detail.shoppingList.title, detail.shoppingList.description)
+        Ok(views.html.shoppingList.edit(id, form.fill(formData)))
+      } getOrElse {
+        Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist.")
+      }
+    }
+  }
+
+  def update(id: Int) = Action.async { implicit rs =>
     form.bindFromRequest.fold(
-      formWithErrors => BadRequest(views.html.shoppingList.edit(1, formWithErrors)),
+      formWithErrors => Future(BadRequest(views.html.shoppingList.edit(1, formWithErrors))),
       formData => {
         val updatedShoppingList = ShoppingList(formData.title, formData.description, Some(id))
-        shoppingListRepository.update(updatedShoppingList)
-        Redirect(routes.ShoppingListController.show(id)).flashing("info" -> "Shopping list was updated.")
+        shoppingListRepository.update(updatedShoppingList).map { _ =>
+          Redirect(routes.ShoppingListController.show(id)).flashing("info" -> "Shopping list was updated.")
+        }
       }
     )
   }
