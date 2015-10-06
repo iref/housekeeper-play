@@ -21,7 +21,7 @@ incOptions := incOptions.value.withNameHashing(true)
 updateOptions := updateOptions.value.withCachedResolution(true)
 
 // we are using local build of play-slick, because evolutions aren't possible until play-slick#269 is solved
-val playSlickVersion = "1.0.1-SNAPSHOT"
+val playSlickVersion = "1.0.1"
 
 val slickVersion = "3.0.0"
 
