@@ -43,7 +43,8 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % playSlickVersion,
   "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
   "org.slf4j" % "slf4j-nop" % "1.7.12",
-  "com.h2database" % "h2" % "1.4.187"
+  "com.h2database" % "h2" % "1.4.187",
+  "org.postgresql" % "postgresql" % "9.4-1203-jdbc42"
 )
 
 libraryDependencies ++= Seq(
