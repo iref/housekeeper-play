@@ -42,6 +42,7 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.play" %% "play-slick" % playSlickVersion,
   "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
+  "org.spire-math" %% "cats" % "0.3.0",
   "org.slf4j" % "slf4j-nop" % "1.7.12",
   "com.h2database" % "h2" % "1.4.187",
   "org.postgresql" % "postgresql" % "9.4-1203-jdbc42"
