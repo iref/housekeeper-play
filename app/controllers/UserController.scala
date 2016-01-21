@@ -44,14 +44,11 @@ class UserController(userRepository: UserRepository,
   }
 
   def edit(id: Int) = Action.async { implicit rs =>
-    userRepository.find(id).map { userOption =>
-      userOption.map { u =>
-        val editUserData = Registration(u.name, u.email, "", "")
-        Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
-      } getOrElse {
-        Redirect(routes.ApplicationController.index()).flashing("error" -> "User does not exist")
-      }
+    val result = HttpResult(userRepository.find(id)).map { user =>
+      val editUserData = Registration(user.name, user.email, "", "")
+      Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
     }
+    result.runResult(Redirect(routes.ApplicationController.index()).flashing("error" -> "User does not exist"))
   }
 
   def update(id: Int) = Action.async { implicit rs =>

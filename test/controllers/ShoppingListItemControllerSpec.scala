@@ -114,7 +114,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
       val request = FakeRequest(POST, "/shopping-lists/1/items/new").withFormUrlEncodedBody(("name", "Super title"), ("quantity", "2"), ("priceForOne", "12.00"))
       val expectedShoppingListItem = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
       shoppingListItemRepositoryMock.add(1, expectedShoppingListItem) returns
-        Future.successful(expectedShoppingListItem.copy(id = Some(2)))
+        Future.successful(expectedShoppingListItem.copy(id = Some(1)))
 
       // when
       val Some(result) = route(request)

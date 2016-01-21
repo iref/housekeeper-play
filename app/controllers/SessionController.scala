@@ -1,5 +1,6 @@
 package controllers
 
+import cats.std.future._
 import org.mindrot.jbcrypt.BCrypt
 import play.api.data.Form
 import play.api.data.Forms._
@@ -28,9 +29,9 @@ class SessionController(userRepository: UserRepository, val messagesApi: Message
     loginForm.bindFromRequest.fold(
       formWithErrors => Future(BadRequest(views.html.session.login(formWithErrors))),
       login => {
-        val result = for {
-          user <- HttpResult(userRepository.findByEmail(login.email)) if BCrypt.checkpw(login.password, user.password)
-        } yield Redirect(routes.UserController.show(user.id.get)).withSession("session.username" -> user.id.get.toString)
+        val result = HttpResult(userRepository.findByEmail(login.email))
+            .filter(user => BCrypt.checkpw(login.password, user.password))
+            .map(user => Redirect(routes.UserController.show(user.id.get)).withSession("session.username" -> user.id.get.toString))
         result.runResult(BadRequest(views.html.session.login(loginForm.withGlobalError("Invalid email address or password."))))
       }
     )
