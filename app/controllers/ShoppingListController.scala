@@ -1,6 +1,8 @@
 package controllers
 
 import models.ShoppingList
+import utils.http._
+import cats.std.future._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
@@ -36,13 +38,11 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository, val
       formWithErrors => Future(BadRequest(views.html.shoppingList.newList(formWithErrors))),
       shoppingListData => {
         val shoppingList = ShoppingList(shoppingListData.title, shoppingListData.description)
-        shoppingListRepository.save(shoppingList).map { saved =>
-          saved.id.map { idVal =>
-            Redirect(routes.ShoppingListController.show(idVal))
-          } getOrElse {
-            Redirect(routes.ShoppingListController.index()).flashing("error" -> "Error while saving newList shopping list")
-          }
-        }
+        val result = for {
+          list <- HttpResult.fromFuture(shoppingListRepository.save(shoppingList))
+          id <- HttpResult(list.id)
+        } yield Redirect(routes.ShoppingListController.show(id))
+        result.runResult(Redirect(routes.ShoppingListController.index()).flashing("error" -> "Error while saving newList shopping list"))
       }
     )
   }
@@ -54,14 +54,11 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository, val
   }
 
   def edit(id: Int) = Action.async { implicit rs =>
-    shoppingListRepository.find(id).map { detailOption =>
-      detailOption.map{ detail =>
-        val formData = FormData(detail.shoppingList.title, detail.shoppingList.description)
-        Ok(views.html.shoppingList.edit(id, form.fill(formData)))
-      } getOrElse {
-        Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist.")
-      }
+    val result = HttpResult(shoppingListRepository.find(id)).map { detail =>
+      val formData = FormData(detail.shoppingList.title, detail.shoppingList.description)
+      Ok(views.html.shoppingList.edit(id, form.fill(formData)))
     }
+    result.runResult(Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist."))
   }
 
   def update(id: Int) = Action.async { implicit rs =>
