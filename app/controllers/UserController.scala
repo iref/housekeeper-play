@@ -10,7 +10,8 @@ import play.api.libs.Codecs
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
 import repositories.UserRepository
-
+import cats.std.future._
+import utils.http._
 import scala.concurrent.Future
 
 class UserController(userRepository: UserRepository,
@@ -36,14 +37,10 @@ class UserController(userRepository: UserRepository,
   }
 
   def show(id: Int) = Action.async { implicit rs =>
-    val userFuture = userRepository.find(id)
-    userFuture.map { userOption =>
-      userOption.map { user =>
-        Ok(views.html.user.show(UserProfile(user)))
-      } getOrElse {
-        Redirect(routes.ApplicationController.index()).flashing("error" -> "User profile does not exist.")
-      }
-    }
+    val result = for {
+      user <- HttpResult(userRepository.find(id))
+    } yield Ok(views.html.user.show(UserProfile(user)))
+    result.runResult(Redirect(routes.ApplicationController.index()).flashing("error" -> "User profile does not exist."))
   }
 
   def edit(id: Int) = Action.async { implicit rs =>

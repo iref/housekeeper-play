@@ -1,6 +1,8 @@
 package controllers
 
 import models.ShoppingListItem
+import utils.http._
+import cats.std.future._
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
@@ -26,13 +28,11 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
       },
       listItem => {
         val item = ShoppingListItem(listItem.name, listItem.quantity, listItem.priceForOne, Some(listId))
-        shoppingListItemRepository.add(listId, item).map { sli =>
-          sli.id.map { idVal =>
-            Redirect(routes.ShoppingListController.show(listId))
-          } getOrElse {
-            Redirect(routes.ShoppingListController.show(listId)).flashing(("error" -> "Error while saving newList shopping item"))
-          }
-        }
+        val result = for {
+          list <- HttpResult.fromFuture(shoppingListItemRepository.add(listId, item))
+          id <- HttpResult(list.id)
+        } yield Redirect(routes.ShoppingListController.show(id))
+        result.runResult(Redirect(routes.ShoppingListController.show(listId)).flashing(("error" -> "Error while saving newList shopping item")))
       }
     )
   }
@@ -44,14 +44,11 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
   }
 
   def edit(id: Int, listId: Int) = Action.async { implicit rs =>
-    shoppingListItemRepository.find(id).map { itemOption =>
-      itemOption.map { item =>
-        val formData = FormData(item.name, item.quantity, item.priceForOne)
-        Ok(views.html.shoppingListItem.edit(id, listId, form.fill(formData)))
-      } getOrElse {
-        Redirect(routes.ShoppingListController.show(listId)).flashing("error" -> "Item does not exists.")
-      }
+    val result = HttpResult(shoppingListItemRepository.find(id)).map { item =>
+      val formData = FormData(item.name, item.quantity, item.priceForOne)
+      Ok(views.html.shoppingListItem.edit(id, listId, form.fill(formData)))
     }
+    result.runResult(Redirect(routes.ShoppingListController.show(listId)).flashing("error" -> "Item does not exists."))
   }
 
   def update(id: Int, listId: Int) = Action.async { implicit rs =>

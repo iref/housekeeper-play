@@ -17,8 +17,8 @@ scalacOptions ++= Seq(
 )
 
 // sbt settings
-incOptions := incOptions.value.withNameHashing(true)
-updateOptions := updateOptions.value.withCachedResolution(true)
+//incOptions := incOptions.value.withNameHashing(true)
+//updateOptions := updateOptions.value.withCachedResolution(true)
 
 // we are using local build of play-slick, because evolutions aren't possible until play-slick#269 is solved
 val playSlickVersion = "1.0.1"
@@ -34,6 +34,7 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   cache,
   ws,
+  "org.spire-math" %% "cats-core" % "0.3.0",
   "org.webjars" %% "webjars-play" % "2.4.0-1",
   "com.adrianhurt" %% "play-bootstrap3" % "0.4.3-P24-SNAPSHOT",
   "com.softwaremill.macwire" %% "macros" % macwireVersion,
@@ -43,12 +44,12 @@ libraryDependencies ++= Seq(
   "com.typesafe.play" %% "play-slick" % playSlickVersion,
   "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
   "org.slf4j" % "slf4j-nop" % "1.7.12",
-  "com.h2database" % "h2" % "1.4.187",
   "org.postgresql" % "postgresql" % "9.4-1203-jdbc42"
 )
 
 libraryDependencies ++= Seq(
-  specs2
+  specs2,
+  "com.h2database" % "h2" % "1.4.187"
 ).map(_ % "test")
 
 routesGenerator := play.routes.compiler.InjectedRoutesGenerator
