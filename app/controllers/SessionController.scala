@@ -30,9 +30,17 @@ class SessionController(userRepository: UserRepository, val messagesApi: Message
       formWithErrors => Future(BadRequest(views.html.session.login(formWithErrors))),
       login => {
         val result = HttpResult(userRepository.findByEmail(login.email))
-            .filter(user => BCrypt.checkpw(login.password, user.password))
-            .map(user => Redirect(routes.UserController.show(user.id.get)).withSession("session.username" -> user.id.get.toString))
-        result.runResult(BadRequest(views.html.session.login(loginForm.withGlobalError("Invalid email address or password."))))
+          .filter(user => BCrypt.checkpw(login.password, user.password))
+          .flatMap(user => HttpResult(user.id))
+          .map { id =>
+            Redirect(routes.UserController.show(id))
+              .withSession("session.username" -> id.toString)
+          }
+
+        result.runResult(
+          BadRequest(views.html.session.login(loginForm
+            .withGlobalError("Invalid email address or password.")))
+        )
       }
     )
   }

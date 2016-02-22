@@ -44,10 +44,13 @@ class UserController(userRepository: UserRepository,
   }
 
   def edit(id: Int) = Action.async { implicit rs =>
-    val result = HttpResult(userRepository.find(id)).map { user =>
+    val result = for {
+      user <- HttpResult(userRepository.find(id))
+    } yield {
       val editUserData = Registration(user.name, user.email, "", "")
       Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
     }
+
     result.runResult(Redirect(routes.ApplicationController.index()).flashing("error" -> "User does not exist"))
   }
 
