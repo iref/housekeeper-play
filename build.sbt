@@ -17,10 +17,9 @@ scalacOptions ++= Seq(
 )
 
 // sbt settings
-//incOptions := incOptions.value.withNameHashing(true)
-//updateOptions := updateOptions.value.withCachedResolution(true)
+incOptions := incOptions.value.withNameHashing(true)
+updateOptions := updateOptions.value.withCachedResolution(true)
 
-// we are using local build of play-slick, because evolutions aren't possible until play-slick#269 is solved
 val playSlickVersion = "1.0.1"
 
 val slickVersion = "3.0.0"
@@ -43,7 +42,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.slick" %% "slick" % slickVersion,
   "com.typesafe.play" %% "play-slick" % playSlickVersion,
   "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
-  "org.spire-math" %% "cats" % "0.3.0",
   "org.slf4j" % "slf4j-nop" % "1.7.12",
   "org.postgresql" % "postgresql" % "9.4-1203-jdbc42"
 )

@@ -1,15 +1,16 @@
 package repositories.impl
 
-import models.Household
-import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
-import repositories.HouseholdRepository
-import repositories.impl.tables.HouseholdsTable
-import slick.driver.JdbcProfile
-
 import scala.concurrent.Future
 
-private[repositories] class SlickHouseholdRepository(protected val dbConfigProvider: DatabaseConfigProvider)
-  extends HasDatabaseConfigProvider[JdbcProfile] with HouseholdRepository with HouseholdsTable {
+import models.Household
+import play.api.db.slick.HasDatabaseConfig
+import repositories.HouseholdRepository
+import repositories.impl.tables.HouseholdsTable
+import slick.backend.DatabaseConfig
+import slick.driver.JdbcProfile
+
+private[repositories] class SlickHouseholdRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
+  extends HasDatabaseConfig[JdbcProfile] with HouseholdRepository with HouseholdsTable {
 
   import driver.api._
 

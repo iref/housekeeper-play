@@ -4,10 +4,10 @@ import org.specs2.mutable.BeforeAfter
 import play.api._
 import play.api.db.evolutions.Evolutions
 import play.api.db.slick.evolutions.SlickEvolutionsComponents
-import play.api.db.slick.{DatabaseConfigProvider, DbName, SlickComponents}
+import play.api.db.slick.{DbName, SlickComponents}
 import play.api.inject._
 import slick.backend.DatabaseConfig
-import slick.profile.BasicProfile
+import slick.driver.JdbcProfile
 
 /**
  * Helper trait for initializing database for Repository specs.
@@ -19,9 +19,7 @@ trait Database extends BeforeAfter with SlickComponents with SlickEvolutionsComp
 
   lazy val configuration: Configuration = Database.testConfiguration
 
-  lazy val dbConfigProvider: DatabaseConfigProvider = new DatabaseConfigProvider {
-    override def get[P <: BasicProfile]: DatabaseConfig[P] = api.dbConfig(DbName("default"))
-  }
+  lazy val dbConfig: DatabaseConfig[JdbcProfile] = api.dbConfig(DbName("default"))
 
   def after = {
     dbApi.databases().foreach { db =>
