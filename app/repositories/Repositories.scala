@@ -12,9 +12,11 @@ trait Repositories {
 
   def dbConfig: DatabaseConfig[JdbcProfile]
 
-  lazy val shoppingListRepository: ShoppingListRepository = new SlickShoppingListRepository(dbConfig)
+  lazy val shoppingListRepository: ShoppingListRepository =
+    new SlickShoppingListRepository(dbConfig)
   
-  lazy val shoppingListItemRepository: ShoppingListItemRepository = new SlickShoppingListItemRepository(dbConfig)
+  lazy val shoppingListItemRepository: ShoppingListItemRepository =
+    new SlickShoppingListItemRepository(dbConfig)
 
   lazy val userRepository: UserRepository = new SlickUserRepository(dbConfig)
 

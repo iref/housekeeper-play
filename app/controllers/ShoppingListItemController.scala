@@ -1,8 +1,9 @@
 package controllers
 
-import models.ShoppingListItem
-import utils.http._
+import scala.concurrent.Future
+
 import cats.std.future._
+import models.ShoppingListItem
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
@@ -10,12 +11,14 @@ import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
 import repositories.{ShoppingListItemRepository, ShoppingListRepository}
+import utils.http._
 
-import scala.concurrent.Future
-
-class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
-                                 shoppingListItemRepository: ShoppingListItemRepository,
-                                 val messagesApi: MessagesApi) extends Controller with I18nSupport {
+class ShoppingListItemController(
+    shoppingListRepository: ShoppingListRepository,
+    shoppingListItemRepository: ShoppingListItemRepository,
+    val messagesApi: MessagesApi)
+  extends Controller
+  with I18nSupport {
 
   import ShoppingListItemController._
 
@@ -32,7 +35,9 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
           list <- HttpResult.fromFuture(shoppingListItemRepository.add(listId, item))
           id <- HttpResult(list.id)
         } yield Redirect(routes.ShoppingListController.show(id))
-        result.runResult(Redirect(routes.ShoppingListController.show(listId)).flashing(("error" -> "Error while saving newList shopping item")))
+        result.runResult(
+          Redirect(routes.ShoppingListController.show(listId))
+            .flashing(("error" -> "Error while saving newList shopping item")))
       }
     )
   }

@@ -12,7 +12,10 @@ trait Controllers {
 
   lazy val shoppingListController = new ShoppingListController(shoppingListRepository, messagesApi)
 
-  lazy val shoppingListItemController = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository, messagesApi)
+  lazy val shoppingListItemController = new ShoppingListItemController(
+      shoppingListRepository,
+      shoppingListItemRepository,
+      messagesApi)
 
   lazy val userController = new UserController(userRepository, messagesApi)
 

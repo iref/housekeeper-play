@@ -1,5 +1,8 @@
 package controllers
 
+import scala.concurrent.Future
+
+import cats.std.future._
 import com.google.common.base.Charsets
 import models.User
 import org.mindrot.jbcrypt.BCrypt
@@ -10,9 +13,7 @@ import play.api.libs.Codecs
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
 import repositories.UserRepository
-import cats.std.future._
 import utils.http._
-import scala.concurrent.Future
 
 class UserController(userRepository: UserRepository,
                      val messagesApi: MessagesApi) extends Controller with I18nSupport {

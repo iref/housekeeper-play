@@ -1,8 +1,8 @@
 package repositories
 
-import models.Household
-
 import scala.concurrent.Future
+
+import models.Household
 
 
 trait HouseholdRepository {

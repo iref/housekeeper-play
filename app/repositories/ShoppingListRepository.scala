@@ -1,8 +1,8 @@
 package repositories
 
-import models.{ShoppingListDetail, ShoppingList}
-
 import scala.concurrent.Future
+
+import models.{ShoppingList, ShoppingListDetail}
 
 /**
  * Trait for accessing and manipulating shopping lists in data storage.

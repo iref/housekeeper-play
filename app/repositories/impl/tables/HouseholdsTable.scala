@@ -2,6 +2,7 @@ package repositories.impl.tables
 
 import models.Household
 import slick.driver.JdbcProfile
+import slick.lifted.ForeignKeyQuery
 import slick.profile.SqlProfile
 
 private[impl] trait HouseholdsTable extends UsersTable {

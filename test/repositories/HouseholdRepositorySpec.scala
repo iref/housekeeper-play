@@ -9,14 +9,16 @@ import scala.concurrent.duration._
 class HouseholdRepositorySpec extends Specification {
 
   val user = User("Test user", "user@gmail.com", "password")
-  val household = Household("Testing household", Some("Really awesome household"), Some("http://awesomelogo.com"))
+  val household = Household("Testing household", Some("Really awesome household"),
+                            Some("http://awesomelogo.com"))
 
   "#find" should {
 
     "find existing household by id" in new Database {
       // given
       val Some(userId) = Await.result(userRepository.save(user), 1.second).id
-      val household = Household("Testing household", Some("Really awesome household"), Some("http://awesomelogo.com"), Some(userId))
+      val household = Household("Testing household", Some("Really awesome household"),
+                                Some("http://awesomelogo.com"), Some(userId))
       val Some(id) = Await.result(householdRepository.save(household), 1.second).id
 
       // when

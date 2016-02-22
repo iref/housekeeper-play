@@ -1,26 +1,31 @@
 package controllers
 
-import models.ShoppingList
-import utils.http._
+import scala.concurrent.Future
+
 import cats.std.future._
+import models.ShoppingList
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.{I18nSupport, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.{Action, Controller}
 import repositories.ShoppingListRepository
-
-import scala.concurrent.Future
+import utils.http._
 
 case class ShoppingListData(title: String, description: Option[String])
 
-class ShoppingListController(shoppingListRepository: ShoppingListRepository, val messagesApi: MessagesApi)
-  extends Controller with I18nSupport {
+class ShoppingListController(
+    shoppingListRepository: ShoppingListRepository,
+    val messagesApi: MessagesApi)
+  extends Controller
+  with I18nSupport {
 
   import ShoppingListController._
 
   def index = Action.async { implicit rs =>
-    shoppingListRepository.all.map(shoppingLists => Ok(views.html.shoppingList.index(shoppingLists)))
+    shoppingListRepository.all.map { shoppingLists =>
+      Ok(views.html.shoppingList.index(shoppingLists))
+    }
   }
 
   def show(id: Int) = Action.async { implicit rs =>
@@ -42,14 +47,17 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository, val
           list <- HttpResult.fromFuture(shoppingListRepository.save(shoppingList))
           id <- HttpResult(list.id)
         } yield Redirect(routes.ShoppingListController.show(id))
-        result.runResult(Redirect(routes.ShoppingListController.index()).flashing("error" -> "Error while saving newList shopping list"))
+        result.runResult(
+          Redirect(routes.ShoppingListController.index())
+            .flashing("error" -> "Error while saving newList shopping list"))
       }
     )
   }
 
   def delete(id: Int) = Action.async { implicit rs =>
     shoppingListRepository.remove(id).map { _ =>
-      Redirect(routes.ShoppingListController.index()).flashing("info" -> "Shopping list was removed.")
+      Redirect(routes.ShoppingListController.index())
+        .flashing("info" -> "Shopping list was removed.")
     }
   }
 
@@ -58,7 +66,9 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository, val
       val formData = FormData(detail.shoppingList.title, detail.shoppingList.description)
       Ok(views.html.shoppingList.edit(id, form.fill(formData)))
     }
-    result.runResult(Redirect(routes.ShoppingListController.index()).flashing("error" -> "Shopping list does not exist."))
+    result.runResult(
+      Redirect(routes.ShoppingListController.index())
+        .flashing("error" -> "Shopping list does not exist."))
   }
 
   def update(id: Int) = Action.async { implicit rs =>
@@ -67,7 +77,8 @@ class ShoppingListController(shoppingListRepository: ShoppingListRepository, val
       formData => {
         val updatedShoppingList = ShoppingList(formData.title, formData.description, Some(id))
         shoppingListRepository.update(updatedShoppingList).map { _ =>
-          Redirect(routes.ShoppingListController.show(id)).flashing("info" -> "Shopping list was updated.")
+          Redirect(routes.ShoppingListController.show(id))
+            .flashing("info" -> "Shopping list was updated.")
         }
       }
     )

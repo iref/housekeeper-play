@@ -1,8 +1,8 @@
 package repositories
 
-import models.User
-
 import scala.concurrent.Future
+
+import models.User
 
 /**
  * Trait for accessing and manipulating users in data storage.

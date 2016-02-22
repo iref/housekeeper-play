@@ -1,5 +1,8 @@
 package repositories.impl
 
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
 import models.{ShoppingList, ShoppingListDetail}
 import play.api.db.slick.HasDatabaseConfig
 import repositories.ShoppingListRepository
@@ -7,12 +10,12 @@ import repositories.impl.tables.{ShoppingListItemsTable, ShoppingListTable}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-
-private[repositories] class SlickShoppingListRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
-  extends HasDatabaseConfig[JdbcProfile] with ShoppingListRepository
-  with ShoppingListTable with ShoppingListItemsTable {
+private[repositories] class SlickShoppingListRepository(
+    protected val dbConfig: DatabaseConfig[JdbcProfile])
+  extends HasDatabaseConfig[JdbcProfile]
+  with ShoppingListRepository
+  with ShoppingListTable
+  with ShoppingListItemsTable {
 
   import driver.api._
 
@@ -20,7 +23,8 @@ private[repositories] class SlickShoppingListRepository(protected val dbConfig: 
 
   def find(id: Int): Future[Option[ShoppingListDetail]] = {
     val leftJoin = for {
-      (l, i) <- shoppingLists joinLeft shoppingListItems on (_.id === _.shoppingListId) if l.id === id
+      (l, i) <- shoppingLists joinLeft shoppingListItems on (_.id === _.shoppingListId)
+      if l.id === id
     } yield (l, i)
 
     db.run(leftJoin.result).map { result =>

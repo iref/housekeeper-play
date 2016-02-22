@@ -9,8 +9,11 @@ import repositories.impl.tables.ShoppingListItemsTable
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 
-private[repositories] class SlickShoppingListItemRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
-  extends HasDatabaseConfig[JdbcProfile] with ShoppingListItemRepository with ShoppingListItemsTable {
+private[repositories] class SlickShoppingListItemRepository(
+    protected val dbConfig: DatabaseConfig[JdbcProfile])
+  extends HasDatabaseConfig[JdbcProfile]
+  with ShoppingListItemRepository
+  with ShoppingListItemsTable {
 
   import driver.api._
 

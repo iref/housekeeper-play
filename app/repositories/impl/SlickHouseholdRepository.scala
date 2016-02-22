@@ -9,8 +9,11 @@ import repositories.impl.tables.HouseholdsTable
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 
-private[repositories] class SlickHouseholdRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
-  extends HasDatabaseConfig[JdbcProfile] with HouseholdRepository with HouseholdsTable {
+private[repositories] class SlickHouseholdRepository(
+    protected val dbConfig: DatabaseConfig[JdbcProfile])
+  extends HasDatabaseConfig[JdbcProfile]
+  with HouseholdRepository
+  with HouseholdsTable {
 
   import driver.api._
 

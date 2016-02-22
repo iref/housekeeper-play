@@ -11,7 +11,9 @@ import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 
 private[repositories] class SlickUserRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
-  extends HasDatabaseConfig[JdbcProfile] with UserRepository with UsersTable {
+  extends HasDatabaseConfig[JdbcProfile]
+  with UserRepository
+  with UsersTable {
 
   import driver.api._
 

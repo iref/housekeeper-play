@@ -1,10 +1,10 @@
 package utils
 
+import scala.concurrent.{ExecutionContext, Future}
+
 import cats.data.OptionT
 import cats.std.future._
 import play.api.mvc.Result
-
-import scala.concurrent.{ExecutionContext, Future}
 
 object http {
 

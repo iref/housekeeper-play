@@ -12,7 +12,9 @@ import slick.driver.JdbcProfile
 /**
  * Helper trait for initializing database for Repository specs.
  */
-trait Database extends BeforeAfter with SlickComponents with SlickEvolutionsComponents with Repositories {
+trait Database extends BeforeAfter with SlickComponents with SlickEvolutionsComponents
+  with Repositories {
+
   lazy val applicationLifecycle = new DefaultApplicationLifecycle
 
   lazy val environment: Environment = Environment.simple()
@@ -21,12 +23,13 @@ trait Database extends BeforeAfter with SlickComponents with SlickEvolutionsComp
 
   lazy val dbConfig: DatabaseConfig[JdbcProfile] = api.dbConfig(DbName("default"))
 
-  def after = {
+  def after: Any = {
     dbApi.databases().foreach { db =>
       Evolutions.cleanupEvolutions(db, true)
       db.shutdown()
     }
   }
+
   def before: Any = {
     dbApi.databases().foreach { db =>
       Evolutions.applyEvolutions(db)
