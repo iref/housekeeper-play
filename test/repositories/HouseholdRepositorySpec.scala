@@ -41,7 +41,7 @@ class HouseholdRepositorySpec extends Specification {
 
   "#save" should {
 
-    "return id of saved household" in new Database {
+    "store household and returns its generated id" in new Database {
       // given
       val userId = Await.result(userRepository.save(user), 1.second).id
       val toSave = household.copy(ownerId = userId)
