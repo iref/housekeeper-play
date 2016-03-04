@@ -158,8 +158,6 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       // then
       status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.UserController.show(2).url)
-      flash(result).get("info") must beSome
-      session(result).get("session.username") must beSome
     }
   }
 

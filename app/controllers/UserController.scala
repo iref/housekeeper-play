@@ -1,6 +1,10 @@
 package controllers
 
 import com.google.common.base.Charsets
+import com.mohiva.play.silhouette.api.repositories.AuthInfoRepository
+import com.mohiva.play.silhouette.api.util.PasswordHasher
+import com.mohiva.play.silhouette.api.{LoginEvent, SignUpEvent, Silhouette, Environment}
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import models.User
 import org.mindrot.jbcrypt.BCrypt
 import play.api.data.Form
@@ -13,8 +17,14 @@ import repositories.UserRepository
 
 import scala.concurrent.Future
 
-class UserController(userRepository: UserRepository,
-                     val messagesApi: MessagesApi) extends Controller with I18nSupport {
+import services.UserService
+
+class UserController(
+    val userService: UserService,
+    val passwordHasher: PasswordHasher,
+    val messagesApi: MessagesApi)
+    (implicit val env: Environment[User, CookieAuthenticator])
+  extends Silhouette[User, CookieAuthenticator] {
 
   import UserController._
 
@@ -26,17 +36,25 @@ class UserController(userRepository: UserRepository,
     registrationForm.bindFromRequest.fold(
       formWithErrors => Future(BadRequest(views.html.user.newUser(formWithErrors))),
       data => {
-        userRepository.save(data.toUser).map { newUser =>
-          Redirect(routes.UserController.show(newUser.id.get))
-            .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
-            .withSession("session.username" -> newUser.id.get.toString)
+        val authInfo = passwordHasher.hash(data.password)
+        val user = User(data.name, data.email, authInfo.password)
+
+        for {
+          user <- userService.save(user)
+          authenticator <- env.authenticatorService.create(user.loginInfo)
+          value <- env.authenticatorService.init(authenticator)
+          result <- env.authenticatorService.embed(value, Redirect(routes.UserController.show(user.id.get)))
+        } yield {
+          env.eventBus.publish(SignUpEvent(user, rs, request2Messages))
+          env.eventBus.publish(LoginEvent(user, rs, request2Messages))
+          result
         }
       }
     )
   }
 
   def show(id: Int) = Action.async { implicit rs =>
-    val userFuture = userRepository.find(id)
+    val userFuture = userService.find(id)
     userFuture.map { userOption =>
       userOption.map { user =>
         Ok(views.html.user.show(UserProfile(user)))
@@ -47,7 +65,7 @@ class UserController(userRepository: UserRepository,
   }
 
   def edit(id: Int) = Action.async { implicit rs =>
-    userRepository.find(id).map { userOption =>
+    userService.find(id).map { userOption =>
       userOption.map { u =>
         val editUserData = Registration(u.name, u.email, "", "")
         Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
@@ -64,19 +82,14 @@ class UserController(userRepository: UserRepository,
       },
       data => {
         val updatedUser = User(data.name, data.email, BCrypt.hashpw(data.password, BCrypt.gensalt()), Option(id))
-        userRepository.update(updatedUser).map(_ => Redirect(routes.UserController.show(id)))
+        userService.save(updatedUser).map(_ => Redirect(routes.UserController.show(id)))
       }
     )
   }
 }
 
 object UserController {
-  case class Registration(name: String, email: String, password: String, passwordConfirmation: String) {
-    def toUser(): User = {
-      val hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt())
-      User(name, email, hashedPassword)
-    }
-  }
+  case class Registration(name: String, email: String, password: String, passwordConfirmation: String)
 
   val registrationForm = Form(
     mapping(

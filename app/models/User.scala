@@ -1,12 +1,13 @@
 package models
 
-import play.api.db.slick.{HasDatabaseConfigProvider, DatabaseConfigProvider}
-import play.api.libs.concurrent.Execution.Implicits._
-import slick.driver.JdbcProfile
-import slick.profile.SqlProfile.ColumnOption
+import com.mohiva.play.silhouette.api.util.PasswordInfo
+import com.mohiva.play.silhouette.api.{LoginInfo, Identity}
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
+import com.mohiva.play.silhouette.impl.util.BCryptPasswordHasher
 
-import scala.concurrent.Future
-
-case class User(name: String, email: String, password: String, id: Option[Int] = None)
+case class User(name: String, email: String, password: String, id: Option[Int] = None) extends Identity {
+  def loginInfo: LoginInfo = LoginInfo(CredentialsProvider.ID, email)
+  def passwordInfo: PasswordInfo = PasswordInfo(BCryptPasswordHasher.ID, password)
+}
 
 
