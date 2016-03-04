@@ -1,5 +1,8 @@
 package controllers
 
+import com.mohiva.play.silhouette.api.LoginInfo
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.test._
 import global.HousekeeperComponent
 import models.User
 import org.mindrot.jbcrypt.BCrypt
@@ -28,6 +31,10 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
   trait UserControllerTestComponents extends HousekeeperComponent {
     override lazy val userRepository = userRepositoryMock
+
+    lazy val identity = User("Test", "user", "passw0rd", Option(1))
+
+    override implicit val env = FakeEnvironment[User, CookieAuthenticator](Seq(identity.loginInfo -> identity))
   }
 
   "#register" should {
@@ -165,7 +172,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "render user detail template" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1")
+      val request = FakeRequest(GET, "/users/1").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
       userRepositoryMock.find(1) returns Future.successful(Some(userA.copy(id = Some(1))))
 
       // when
@@ -180,7 +187,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "redirect to index if user does not exists" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1")
+      val request = FakeRequest(GET, "/users/1").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
       userRepositoryMock.find(1) returns Future.successful(None)
 
       // when
@@ -196,7 +203,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
   "#edit" should {
     "render edit user template for existing user" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1/edit")
+      val request = FakeRequest(GET, "/users/1/edit").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
       userRepositoryMock.find(1) returns Future.successful(Some(userA.copy(id = Some(1))))
 
       // when
@@ -210,7 +217,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "redirect to index if user with does not exist" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1/edit")
+      val request = FakeRequest(GET, "/users/1/edit").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
       userRepositoryMock.find(1) returns Future.successful(None)
 
       // when
@@ -227,7 +234,9 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "not update user without name" in new WithController {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody("email" -> "test@example.com")
+      val request = FakeRequest(POST, "/users/1/edit").
+        withFormUrlEncodedBody("email" -> "test@example.com").
+        withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
 
       // when
       val Some(result) = route(request)
@@ -240,7 +249,9 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "not update user without email" in new WithController {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody("name" -> "test")
+      val request = FakeRequest(POST, "/users/1/edit").
+        withFormUrlEncodedBody("name" -> "test").
+        withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
 
       // when
       val Some(result) = route(request)
@@ -258,7 +269,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "email" -> "test@example.com",
         "password" -> "testPassword2",
         "oldPassword" -> "testPassword"
-      )
+      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
 
       // when
       val Some(result) = route(request)
@@ -276,7 +287,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "email" -> userA.email,
         "password" -> "testPasswordXXX",
         "passwordConfirmation" -> userA.password
-      )
+      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
 
       // when
       val Some(result) = route(request)
@@ -294,7 +305,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "email" -> "updated@example.com",
         "password" -> "newUpdatedPasswordXXX",
         "passwordConfirmation" -> "newUpdatedPasswordXXX"
-      )
+      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
       val toUpdate = User("Updated user name", "updated@example.com", BCrypt.hashpw("newUpdatedPasswordXXX", BCrypt.gensalt()), Some(1))
       userRepositoryMock.update(toUpdate) returns Future.successful(1)
 
@@ -312,7 +323,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> expectedUser.name,
         "email" -> expectedUser.email
-      )
+      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
 
       // when
       val Some(result) = route(request)
@@ -336,7 +347,8 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "name" -> name,
         "email" -> email,
         "password" -> password,
-        "passwordConfirmation" -> password)
+        "passwordConfirmation" -> password
+      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
       userRepositoryMock.update(any[User]) returns Future.successful(1)
 
       // when

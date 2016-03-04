@@ -14,7 +14,6 @@ class UserProfileSpec extends Specification {
       val profile = UserProfile(user)
 
       profile.name must beEqualTo(user.name)
-      profile.email must beEqualTo(user.email)
       profile.gravatar must not beEmpty
     }
 

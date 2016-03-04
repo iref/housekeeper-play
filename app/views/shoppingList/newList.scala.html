@@ -1,8 +1,8 @@
-@(shoppingListForm: Form[ShoppingListController.FormData])(implicit session: Session, messages: Messages)
+@(shoppingListForm: Form[ShoppingListController.FormData], user: User)(implicit messages: Messages)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
-@main("New Shopping List | Housekeeper") {
+@main("New Shopping List | Housekeeper", Option(user)) {
     <div class="page-header">
         <h1>New Shopping List</h1>
     </div>

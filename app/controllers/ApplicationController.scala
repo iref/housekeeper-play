@@ -1,10 +1,14 @@
 package controllers
 
-import play.api.mvc.{Action, Controller}
+import com.mohiva.play.silhouette.api.Environment
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import models.User
+import play.api.i18n.MessagesApi
 
-class ApplicationController extends Controller {
+class ApplicationController(messagesApi: MessagesApi, env: Environment[User, CookieAuthenticator])
+  extends AuthenticatedController(messagesApi, env) {
 
-  def index = Action { implicit request =>
-    Ok(views.html.index())
+  def index = SecuredAction { implicit request =>
+    Ok(views.html.index(request.identity))
   }
 }

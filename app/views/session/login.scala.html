@@ -1,13 +1,15 @@
-@(form: Form[SessionController.Login])(implicit session: Session, messages: Messages)
+@(form: Form[SessionController.Login])(implicit request: RequestHeader, messages: Messages)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
 @main("Sign in | Housekeeper") {
-    <ul>
-        @form.globalErrors.map { error =>
-            <li class="text-danger">@error.message</li>
-        }
-    </ul>
+
+    @request.flash.get("error").map { error =>
+        <div class="col-md-6 col-md-offset-3 alert alert-danger alert-error">
+            <a href="#" class="close" data-dismiss="alert">&times;</a>
+            @error
+        </div>
+    }
 
     <div class="row">
         <div class="col-md-4 col-md-offset-4">

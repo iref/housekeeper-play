@@ -1,6 +1,8 @@
 package controllers
 
-import models.ShoppingListItem
+import com.mohiva.play.silhouette.api.Environment
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import models.{User, ShoppingListItem}
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
@@ -12,16 +14,18 @@ import repositories.{ShoppingListItemRepository, ShoppingListRepository}
 import scala.concurrent.Future
 
 class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
-                                 shoppingListItemRepository: ShoppingListItemRepository,
-                                 val messagesApi: MessagesApi) extends Controller with I18nSupport {
+    shoppingListItemRepository: ShoppingListItemRepository,
+    messagesApi: MessagesApi,
+    env: Environment[User, CookieAuthenticator])
+  extends AuthenticatedController(messagesApi, env) {
 
   import ShoppingListItemController._
 
-  def save(listId: Int) = Action.async { implicit rs =>
+  def save(listId: Int) = SecuredAction.async { implicit rs =>
     form.bindFromRequest.fold(
       formWithErrors => {
         shoppingListRepository.find(listId).map { detailOption =>
-          BadRequest(views.html.shoppingList.show(detailOption, formWithErrors))
+          BadRequest(views.html.shoppingList.show(detailOption, formWithErrors, rs.identity))
         }
       },
       listItem => {
@@ -37,26 +41,26 @@ class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
     )
   }
 
-  def remove(id: Int, listId: Int) = Action.async { implicit rs =>
+  def remove(id: Int, listId: Int) = SecuredAction.async { implicit rs =>
     shoppingListItemRepository.remove(id).map{ _ =>
       Redirect(routes.ShoppingListController.show(listId)).flashing(("info" -> "Item was deleted."))
     }
   }
 
-  def edit(id: Int, listId: Int) = Action.async { implicit rs =>
+  def edit(id: Int, listId: Int) = SecuredAction.async { implicit rs =>
     shoppingListItemRepository.find(id).map { itemOption =>
       itemOption.map { item =>
         val formData = FormData(item.name, item.quantity, item.priceForOne)
-        Ok(views.html.shoppingListItem.edit(id, listId, form.fill(formData)))
+        Ok(views.html.shoppingListItem.edit(id, listId, rs.identity, form.fill(formData)))
       } getOrElse {
         Redirect(routes.ShoppingListController.show(listId)).flashing("error" -> "Item does not exists.")
       }
     }
   }
 
-  def update(id: Int, listId: Int) = Action.async { implicit rs =>
+  def update(id: Int, listId: Int) = SecuredAction.async { implicit rs =>
     ShoppingListItemController.form.bindFromRequest.fold(
-      formWithError => Future(BadRequest(views.html.shoppingListItem.edit(id, listId, formWithError))),
+      formWithError => Future(BadRequest(views.html.shoppingListItem.edit(id, listId, rs.identity, formWithError))),
       listItem => {
         val toUpdate = ShoppingListItem(listItem.name, listItem.quantity, listItem.priceForOne, Some(listId), Some(id))
         shoppingListItemRepository.update(toUpdate).map { _ =>

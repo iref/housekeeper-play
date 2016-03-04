@@ -3,9 +3,10 @@ package controllers
 import com.mohiva.play.silhouette.api.Environment
 import com.mohiva.play.silhouette.api.util.PasswordHasher
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import models.User
 import play.api.i18n.MessagesApi
-import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRepository}
+import repositories.{ShoppingListItemRepository, ShoppingListRepository}
 import services.UserService
 
 /**
@@ -14,8 +15,6 @@ import services.UserService
 trait Controllers {
 
   def env: Environment[User, CookieAuthenticator]
-
-  def userRepository: UserRepository
 
   def shoppingListRepository: ShoppingListRepository
 
@@ -27,15 +26,17 @@ trait Controllers {
 
   def userService: UserService
 
-  lazy val applicationController = new ApplicationController
+  def credentialsProvider: CredentialsProvider
 
-  lazy val shoppingListController = new ShoppingListController(shoppingListRepository, messagesApi)
+  lazy val applicationController = new ApplicationController(messagesApi, env)
 
-  lazy val shoppingListItemController = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository, messagesApi)
+  lazy val shoppingListController = new ShoppingListController(messagesApi, env, shoppingListRepository)
 
-  lazy val userController = new UserController(userService, passwordHasher, messagesApi)(env)
+  lazy val shoppingListItemController = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository, messagesApi, env)
 
-  lazy val sessionController = new SessionController(userRepository, messagesApi)
+  lazy val userController = new UserController(messagesApi, env, userService, passwordHasher)
+
+  lazy val sessionController = new SessionController(messagesApi, env, userService, credentialsProvider)
 
 
 

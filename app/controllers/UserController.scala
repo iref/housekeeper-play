@@ -20,11 +20,11 @@ import scala.concurrent.Future
 import services.UserService
 
 class UserController(
-    val userService: UserService,
-    val passwordHasher: PasswordHasher,
-    val messagesApi: MessagesApi)
-    (implicit val env: Environment[User, CookieAuthenticator])
-  extends Silhouette[User, CookieAuthenticator] {
+    messagesApi: MessagesApi,
+    env: Environment[User, CookieAuthenticator],
+    userService: UserService,
+    passwordHasher: PasswordHasher)
+  extends AuthenticatedController(messagesApi, env) {
 
   import UserController._
 
@@ -64,21 +64,21 @@ class UserController(
     }
   }
 
-  def edit(id: Int) = Action.async { implicit rs =>
+  def edit(id: Int) = SecuredAction.async { implicit rs =>
     userService.find(id).map { userOption =>
       userOption.map { u =>
         val editUserData = Registration(u.name, u.email, "", "")
-        Ok(views.html.user.edit(id, registrationForm.fill(editUserData)))
+        Ok(views.html.user.edit(rs.identity, registrationForm.fill(editUserData)))
       } getOrElse {
         Redirect(routes.ApplicationController.index()).flashing("error" -> "User does not exist")
       }
     }
   }
 
-  def update(id: Int) = Action.async { implicit rs =>
+  def update(id: Int) = SecuredAction.async { implicit rs =>
     registrationForm.bindFromRequest.fold(
       formWithErrors => {
-        Future(BadRequest(views.html.user.edit(id, formWithErrors)))
+        Future(BadRequest(views.html.user.edit(rs.identity, formWithErrors)))
       },
       data => {
         val updatedUser = User(data.name, data.email, BCrypt.hashpw(data.password, BCrypt.gensalt()), Option(id))
@@ -102,14 +102,11 @@ object UserController {
     })
   )
 
-  case class UserProfile(name: String, email: String) {
+  case class UserProfile(user: User) {
+    def name: String = user.name
     def gravatar(): String = {
-      val emailHash = Codecs.md5(email.getBytes(Charsets.UTF_8))
+      val emailHash = Codecs.md5(user.email.getBytes(Charsets.UTF_8))
       s"https://secure.gravatar.com/avatar/$emailHash?s=200"
     }
-  }
-
-  object UserProfile {
-    def apply(user: User): UserProfile = UserProfile(user.name, user.email)
   }
 }

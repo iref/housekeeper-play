@@ -1,6 +1,6 @@
-@(profile: UserController.UserProfile)(implicit session: Session)
+@(profile: UserController.UserProfile)
 
-@main("User profile | Housekeeper") {
+@main("User profile | Housekeeper", Option(profile.user)) {
     <div class="page-header">
         <h1>User profile</h1>
     </div>

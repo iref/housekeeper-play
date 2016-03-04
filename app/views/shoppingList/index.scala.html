@@ -1,6 +1,6 @@
-@(shoppingLists: List[ShoppingList])(implicit flash: Flash, session: Session)
+@(shoppingLists: List[ShoppingList], user: User)(implicit flash: Flash)
 
-@main("Shopping Lists | Housekeeper") {
+@main("Shopping Lists | Housekeeper", Option(user)) {
     @flash.get("info").map { info =>
         <div class="alert alert-info">@info</div>
     }

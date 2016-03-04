@@ -1,4 +1,4 @@
-@(title: String)(content: Html)(implicit session: Session)
+@(title: String, user: Option[User] = None)(content: Html)
 <!DOCTYPE html>
 <html>
     <head>
@@ -41,11 +41,11 @@
                         </li>
                     </ul>
                     <ul class="nav navbar-nav navbar-right">
-                        @if(session.get("session.username").isDefined) {
+                        @user.map { _ =>
                             <li>
                                 <a href="@routes.SessionController.logout()">Logout</a>
                             </li>
-                        } else {
+                        }.getOrElse {
                             <li>
                                 <a href="@routes.UserController.register()">Register</a>
                             </li>

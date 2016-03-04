@@ -1,6 +1,6 @@
-@()(implicit session: Session)
+@(user: User)(implicit session: Session)
 
-@main("Housekeeper") {
+@main("Housekeeper", Option(user)) {
     <div class="page-header">
         <h1>Housekeeper, your apartment management</h1>
     </div>

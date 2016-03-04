@@ -1,8 +1,8 @@
-@(userId: Int, form: Form[UserController.Registration])(implicit session: Session, messages: Messages)
+@(user: User, form: Form[UserController.Registration])(implicit messages: Messages)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
-@main("Edit profile | Housekeeper") {
+@main("Edit profile | Housekeeper", Option(user)) {
     @form.globalErrors.map { error =>
         <div class="alert alert-danger">@error.message</div>
     }
@@ -10,11 +10,15 @@
         <h1>Edit profile</h1>
     </div>
     <div>
-        @b3.form(routes.UserController.update(userId)) {
-            @b3.text(form("name"), '_label -> "Name")
-            @b3.email(form("email"), '_label -> "Email")
-            @b3.password(form("password"), '_label -> "New password")
-            @b3.password(form("passwordConfirmation"), '_label -> "New password confirmation")
+        @user.id.map { userID =>
+            @b3.form(routes.UserController.update(userID)) {
+                @b3.text(form("name"), '_label -> "Name")
+                @b3.email(form("email"), '_label -> "Email")
+                @b3.password(form("password"), '_label -> "New password")
+                @b3.password(form("passwordConfirmation"), '_label -> "New password confirmation")
+            }
+        }.getOrElse {
+            <div class="alert alert-warning">User does not exist.</div>
         }
     </div>
 }
