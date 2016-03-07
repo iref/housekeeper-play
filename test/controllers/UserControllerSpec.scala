@@ -13,11 +13,14 @@ import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
 import repositories.UserRepository
 
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 class UserControllerSpec extends PlaySpecification with Mockito {
 
-  val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
+  val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()), Some(1))
+
+  implicit val authEnv = FakeEnvironment[User, CookieAuthenticator](Seq(userA.loginInfo -> userA))
 
   val userRepositoryMock = mock[UserRepository]
 
@@ -32,9 +35,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
   trait UserControllerTestComponents extends HousekeeperComponent {
     override lazy val userRepository = userRepositoryMock
 
-    lazy val identity = User("Test", "user", "passw0rd", Option(1))
-
-    override implicit val env = FakeEnvironment[User, CookieAuthenticator](Seq(identity.loginInfo -> identity))
+    override lazy val env = authEnv
   }
 
   "#register" should {
@@ -50,7 +51,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
     }
   }
 
-  "#create" should {
+  "#save" should {
 
     "not create user without name" in new WithController {
       // given
@@ -172,8 +173,8 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "render user detail template" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
-      userRepositoryMock.find(1) returns Future.successful(Some(userA.copy(id = Some(1))))
+      val request = FakeRequest(GET, "/users/1").withAuthenticator[CookieAuthenticator](userA.loginInfo)
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
 
       // when
       val Some(result) = route(request)
@@ -187,7 +188,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "redirect to index if user does not exists" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      val request = FakeRequest(GET, "/users/1").withAuthenticator[CookieAuthenticator](userA.loginInfo)
       userRepositoryMock.find(1) returns Future.successful(None)
 
       // when
@@ -203,8 +204,8 @@ class UserControllerSpec extends PlaySpecification with Mockito {
   "#edit" should {
     "render edit user template for existing user" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1/edit").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
-      userRepositoryMock.find(1) returns Future.successful(Some(userA.copy(id = Some(1))))
+      val request = FakeRequest(GET, "/users/1/edit").withAuthenticator[CookieAuthenticator](userA.loginInfo)
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
 
       // when
       val Some(result) = route(request)
@@ -217,7 +218,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "redirect to index if user with does not exist" in new WithController {
       // given
-      val request = FakeRequest(GET, "/users/1/edit").withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      val request = FakeRequest(GET, "/users/1/edit").withAuthenticator[CookieAuthenticator](userA.loginInfo)
       userRepositoryMock.find(1) returns Future.successful(None)
 
       // when
@@ -234,9 +235,10 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "not update user without name" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val request = FakeRequest(POST, "/users/1/edit").
         withFormUrlEncodedBody("email" -> "test@example.com").
-        withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+        withAuthenticator[CookieAuthenticator](userA.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -249,9 +251,10 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "not update user without email" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val request = FakeRequest(POST, "/users/1/edit").
         withFormUrlEncodedBody("name" -> "test").
-        withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+        withAuthenticator[CookieAuthenticator](userA.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -264,12 +267,13 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "not update user password if confirmation is missing" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> "test",
         "email" -> "test@example.com",
         "password" -> "testPassword2",
         "oldPassword" -> "testPassword"
-      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      ).withAuthenticator[CookieAuthenticator](userA.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -282,12 +286,13 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "not update user password if it does not match confirmation" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "password" -> "testPasswordXXX",
         "passwordConfirmation" -> userA.password
-      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      ).withAuthenticator[CookieAuthenticator](userA.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -300,12 +305,13 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "update user in repository" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> "Updated user name",
         "email" -> "updated@example.com",
         "password" -> "newUpdatedPasswordXXX",
         "passwordConfirmation" -> "newUpdatedPasswordXXX"
-      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      ).withAuthenticator[CookieAuthenticator](userA.loginInfo)
       val toUpdate = User("Updated user name", "updated@example.com", BCrypt.hashpw("newUpdatedPasswordXXX", BCrypt.gensalt()), Some(1))
       userRepositoryMock.update(toUpdate) returns Future.successful(1)
 
@@ -319,11 +325,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "update user if password is not provided" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val expectedUser = User("Passwordless user update", "updated@example.com", userA.password, Some(1))
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> expectedUser.name,
         "email" -> expectedUser.email
-      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      ).withAuthenticator[CookieAuthenticator](userA.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -337,6 +344,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
 
     "redirect to user detail after successful update" in new WithController {
       // given
+      userRepositoryMock.find(1) returns Future.successful(Some(userA))
       val name = "Updated user name"
       val email = "updated@example.com"
       val password = "newPassword"
@@ -348,7 +356,7 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "email" -> email,
         "password" -> password,
         "passwordConfirmation" -> password
-      ).withAuthenticator[CookieAuthenticator](LoginInfo("user", "user"))
+      ).withAuthenticator[CookieAuthenticator](userA.loginInfo)
       userRepositoryMock.update(any[User]) returns Future.successful(1)
 
       // when

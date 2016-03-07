@@ -1,7 +1,10 @@
 package controllers
 
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.test._
 import global.HousekeeperComponent
-import models.{ShoppingList, ShoppingListDetail, ShoppingListItem}
+import models.{User, ShoppingList, ShoppingListDetail, ShoppingListItem}
+import org.mindrot.jbcrypt.BCrypt
 import org.specs2.mock.Mockito
 import play.api.ApplicationLoader.Context
 import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
@@ -9,6 +12,7 @@ import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
 import repositories.{ShoppingListItemRepository, ShoppingListRepository}
 
 import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 /**
@@ -21,12 +25,17 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
     List()
   )
 
+  val user = User("John Doe", "doe@test.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()), Some(1))
+
+  implicit val authEnv = FakeEnvironment[User, CookieAuthenticator](Seq(user.loginInfo -> user))
+
   val shoppingListRepositoryMock = mock[ShoppingListRepository]
   val shoppingListItemRepositoryMock = mock[ShoppingListItemRepository]
   
   trait ShoppingListItemControllerTestComponents extends HousekeeperComponent {
     override lazy val shoppingListRepository = shoppingListRepositoryMock
     override lazy val shoppingListItemRepository = shoppingListItemRepositoryMock
+    override lazy val env = authEnv
   }
 
   class ShoppingListItemControllerTestLoader extends ApplicationLoader {
@@ -40,7 +49,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
   "#save" should {
     "not save item without name" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/new").withFormUrlEncodedBody(("quantity", "1"))
+      val request = FakeRequest(POST, "/shopping-lists/1/items/new")
+          .withFormUrlEncodedBody(("quantity", "1"))
+          .withAuthenticator(user.loginInfo)
       shoppingListRepositoryMock.find(1) returns Future.successful(Some(detail))
 
       // when
@@ -54,7 +65,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "not save item without quantity" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/new").withFormUrlEncodedBody(("name", "Super title"))
+      val request = FakeRequest(POST, "/shopping-lists/1/items/new")
+        .withFormUrlEncodedBody(("name", "Super title"))
+        .withAuthenticator(user.loginInfo)
       shoppingListRepositoryMock.find(1) returns Future.successful(Some(detail))
 
       // when
@@ -68,7 +81,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "not save item with negative quantity" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/new").withFormUrlEncodedBody(("name", "Super title"), ("quantity", "-1"))
+      val request = FakeRequest(POST, "/shopping-lists/1/items/new")
+        .withFormUrlEncodedBody(("name", "Super title"), ("quantity", "-1"))
+        .withAuthenticator(user.loginInfo)
       shoppingListRepositoryMock.find(1) returns Future.successful(Some(detail))
 
       // when
@@ -82,7 +97,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "not save item with zero quantity" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/new").withFormUrlEncodedBody(("name", "Super title"), ("quantity", "0"))
+      val request = FakeRequest(POST, "/shopping-lists/1/items/new")
+        .withFormUrlEncodedBody(("name", "Super title"), ("quantity", "0"))
+        .withAuthenticator(user.loginInfo)
       shoppingListRepositoryMock.find(1) returns Future.successful(Some(detail))
 
       // when
@@ -98,6 +115,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
       // given
       val request = FakeRequest(POST, "/shopping-lists/1/items/new")
         .withFormUrlEncodedBody(("name", "Super title"), ("quantity", "1"), ("priceForOne", "-1.0"))
+        .withAuthenticator(user.loginInfo)
       shoppingListRepositoryMock.find(1) returns Future.successful(Some(detail))
 
       // when
@@ -111,7 +129,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "save valid item" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/new").withFormUrlEncodedBody(("name", "Super title"), ("quantity", "2"), ("priceForOne", "12.00"))
+      val request = FakeRequest(POST, "/shopping-lists/1/items/new")
+        .withFormUrlEncodedBody(("name", "Super title"), ("quantity", "2"), ("priceForOne", "12.00"))
+        .withAuthenticator(user.loginInfo)
       val expectedShoppingListItem = ShoppingListItem("Super title", 2, Some(12.00), Some(1))
       shoppingListItemRepositoryMock.add(1, expectedShoppingListItem) returns
         Future.successful(expectedShoppingListItem.copy(id = Some(2)))
@@ -132,7 +152,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
       shoppingListItemRepositoryMock.remove(1) returns Future.successful(1)
 
       // when
-      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/items/1"))
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/items/1").withAuthenticator(user.loginInfo))
 
       // then
       Await.ready(result, 1.second)
@@ -142,7 +162,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
     "redirect to shopping list detail" in new WithController {
       // given
       shoppingListItemRepositoryMock.remove(1) returns Future.successful(1)
-      val request = FakeRequest(GET, "/shopping-lists/1/items/1")
+      val request = FakeRequest(GET, "/shopping-lists/1/items/1").withAuthenticator(user.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -161,7 +181,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
       shoppingListItemRepositoryMock.find(1) returns Future.successful(Some(item))
 
       // when
-      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/items/1/edit"))
+      val Some(result) = route(FakeRequest(GET, "/shopping-lists/1/items/1/edit").withAuthenticator(user.loginInfo))
 
       // then
       status(result) must beEqualTo(OK)
@@ -173,7 +193,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
   "#update" should {
     "not update item without name" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/1").withFormUrlEncodedBody("quantity" -> "2")
+      val request = FakeRequest(POST, "/shopping-lists/1/items/1")
+        .withFormUrlEncodedBody("quantity" -> "2")
+        .withAuthenticator(user.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -185,7 +207,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "not update item without quantity" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/1").withFormUrlEncodedBody("name" -> "New title")
+      val request = FakeRequest(POST, "/shopping-lists/1/items/1")
+        .withFormUrlEncodedBody("name" -> "New title")
+        .withAuthenticator(user.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -197,7 +221,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "not update item with negative quantity" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/1").withFormUrlEncodedBody("name" -> "New title", "quantity" -> "-1")
+      val request = FakeRequest(POST, "/shopping-lists/1/items/1")
+        .withFormUrlEncodedBody("name" -> "New title", "quantity" -> "-1")
+        .withAuthenticator(user.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -209,7 +235,9 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
 
     "not update item with negative price for one" in new WithController {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/items/1").withFormUrlEncodedBody("name" -> "New title", "quantity" -> "1", "priceForOne" -> "-12.00")
+      val request = FakeRequest(POST, "/shopping-lists/1/items/1")
+        .withFormUrlEncodedBody("name" -> "New title", "quantity" -> "1", "priceForOne" -> "-12.00")
+        .withAuthenticator(user.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -227,7 +255,7 @@ class ShoppingListItemControllerSpec extends PlaySpecification with Mockito {
         "name" -> updated.name,
         "quantity" -> updated.quantity.toString,
         "priceForOne" -> updated.priceForOne.get.toString
-      )
+      ).withAuthenticator(user.loginInfo)
       shoppingListItemRepositoryMock.update(updated) returns(Future.successful(1))
 
       // when

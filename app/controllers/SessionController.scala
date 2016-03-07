@@ -33,7 +33,7 @@ class SessionController(
   }
 
   def logout() = SecuredAction.async { implicit request =>
-    val result = Redirect(routes.ApplicationController.index)
+    val result = Redirect(routes.SessionController.login)
     env.eventBus.publish(LogoutEvent(request.identity, request, request2Messages))
     env.authenticatorService.discard(request.authenticator, result)
   }
@@ -49,7 +49,8 @@ class SessionController(
               for {
                 authenticator <- env.authenticatorService.create(loginInfo)
                 value <- env.authenticatorService.init(authenticator)
-                result <- env.authenticatorService.embed(value, Redirect(routes.UserController.show(user.id.get)).withSession("session.username" -> user.id.get.toString))
+                result <- env.authenticatorService.embed(value,
+                  Redirect(routes.UserController.show(user.id.get)).withSession("session.username" -> user.id.get.toString))
               } yield {
                 env.eventBus.publish(LoginEvent(user, rs, request2Messages))
                 result

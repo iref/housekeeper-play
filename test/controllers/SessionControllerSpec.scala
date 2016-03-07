@@ -1,5 +1,9 @@
 package controllers
 
+import com.mohiva.play.silhouette.api.util.PasswordInfo
+import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
+import com.mohiva.play.silhouette.impl.daos.DelegableAuthInfoDAO
+import com.mohiva.play.silhouette.test._
 import global.HousekeeperComponent
 import models.User
 import org.mindrot.jbcrypt.BCrypt
@@ -9,12 +13,19 @@ import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
 import repositories.UserRepository
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.reflect.ClassTag
 
 class SessionControllerSpec extends PlaySpecification with Mockito {
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
   val userRepositoryMock = mock[UserRepository]
+
+  val passwordInfoRepositoryMock = mock[DelegableAuthInfoDAO[PasswordInfo]]
+  passwordInfoRepositoryMock.classTag returns(ClassTag(classOf[PasswordInfo]))
+
+  implicit val authEnv = FakeEnvironment[User, CookieAuthenticator](Seq(userA.loginInfo -> userA))
 
   class WithController extends WithApplicationLoader(applicationLoader = new SessionControllerApplicationLoader)
 
@@ -26,6 +37,10 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
   trait SessionControllerComponents extends HousekeeperComponent {
     override lazy val userRepository: UserRepository = userRepositoryMock
+
+    override lazy val passwordInfoRepository = passwordInfoRepositoryMock
+
+    override lazy val env = authEnv
   }
 
   "#login" should {
@@ -45,7 +60,7 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
 
     "remove username from session" in new WithController {
       // given
-      val request = FakeRequest(GET, "/logout").withSession(("session.username", "1"))
+      val request = FakeRequest(GET, "/logout").withAuthenticator(userA.loginInfo)
 
       // when
       val Some(result) = route(request)
@@ -54,20 +69,22 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
       session(result).isEmpty must beTrue
     }
 
-    "redirect to home page" in new WithController {
+    "redirect to login page" in new WithController {
       // given
-      val request = FakeRequest(GET, "/logout").withSession("session.username" -> "1")
+      val request = FakeRequest(GET, "/logout").withAuthenticator(userA.loginInfo)
 
       // when
       val Some(result) = route(request)
 
       // then
       status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome("/")
+      redirectLocation(result) must beSome("/login")
     }
   }
 
   "#authenticate" should {
+
+    passwordInfoRepositoryMock.find(userA.loginInfo) returns(Future.successful(Option(userA.passwordInfo)))
 
     "not log in user without email" in new WithController {
       // given
@@ -105,9 +122,9 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("Invalid email address or password.")
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome("/login")
+      flash(result).get("error") must beSome("invalid.credentials")
     }
 
     "not log in nonexistent user" in new WithController {
@@ -115,20 +132,21 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
       val request = FakeRequest(POST, "/login").withFormUrlEncodedBody("email" -> "nonexisting@email.com",
         "password" -> userA.password)
       userRepositoryMock.findByEmail("nonexisting@email.com") returns(Future.successful(None))
+      passwordInfoRepositoryMock.find(userA.copy(email = "nonexisting@email.com").loginInfo) returns(Future.successful(None))
 
       // when
       val Some(result) = route(request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("Invalid email address or password.")
+      status(result) must beEqualTo(SEE_OTHER)
+      redirectLocation(result) must beSome("/login")
     }
 
     "log in user" in new WithController {
       // given
       val request = FakeRequest("POST", "/login").withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
       userRepositoryMock.findByEmail(Matchers.eq(userA.email)) returns(Future.successful(Some(userA.copy(id = Some(1)))))
+      passwordInfoRepositoryMock.find(userA.loginInfo) returns(Future.successful(Option(userA.passwordInfo)))
 
       // when
       val Some(result) = route(request)
