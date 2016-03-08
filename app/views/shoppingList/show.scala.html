@@ -1,4 +1,4 @@
-@(shoppingListDetail: Option[models.ShoppingListDetail], listItemForm: Form[ShoppingListItemController.FormData], user: User)(implicit flash: Flash, messages: Messages)
+@(shoppingListDetail: Option[models.ShoppingListDetail], listItemForm: Form[ShoppingListItemController.FormData], user: User)(implicit request: RequestHeader, flash: Flash, messages: Messages)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
@@ -34,6 +34,7 @@
 
                 <div id="itemFormContainer" class="row">
                 @b3.form(routes.ShoppingListItemController.save(sld.shoppingList.id.get)) {
+                    @helper.CSRF.formField
                     <div class="col-md-12">
                        @b3.text(listItemForm("name"), '_label -> "Name", '_showIconOnError -> true)
                     </div>

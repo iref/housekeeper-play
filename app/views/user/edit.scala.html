@@ -1,4 +1,4 @@
-@(user: User, form: Form[UserController.Registration])(implicit messages: Messages)
+@(user: User, form: Form[UserController.Registration])(implicit request: RequestHeader, messages: Messages)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 
@@ -12,6 +12,7 @@
     <div>
         @user.id.map { userID =>
             @b3.form(routes.UserController.update(userID)) {
+                @helper.CSRF.formField
                 @b3.text(form("name"), '_label -> "Name")
                 @b3.email(form("email"), '_label -> "Email")
                 @b3.password(form("password"), '_label -> "New password")
