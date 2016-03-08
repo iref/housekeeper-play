@@ -27,8 +27,11 @@ val slickVersion = "3.0.0"
 val macwireVersion = "1.0.1"
 
 resolvers ++= Seq(
+  "Atlassian Releases" at "https://maven.atlassian.com/public/",
   "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-  "Scalaz Bintray Repository" at "https://dl.bintray.com/scalaz/releases")
+  "Scalaz Bintray Repository" at "https://dl.bintray.com/scalaz/releases",
+  Resolver.jcenterRepo
+)
 
 libraryDependencies ++= Seq(
   cache,
