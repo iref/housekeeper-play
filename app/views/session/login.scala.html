@@ -17,6 +17,7 @@
                 <h1>Please, sign in.</h1>
                 @b3.text(form("email"), '_label -> "Email Address")
                 @b3.password(form("password"), '_label -> "Password")
+                @b3.checkbox(form("rememberMe"), '_text -> "Remember me", 'checked -> true)
                 @b3.submit('class -> "btn btn-primary btn-block") { Sign in }
             }
         </div>

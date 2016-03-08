@@ -7,7 +7,7 @@ import com.mohiva.play.silhouette.impl.providers.CredentialsProvider
 import models.User
 import play.api.i18n.MessagesApi
 import repositories.{ShoppingListItemRepository, ShoppingListRepository}
-import services.UserService
+import services.{RememberMeService, UserService}
 
 /**
  * Bootstrapping of controllers.
@@ -26,6 +26,8 @@ trait Controllers {
 
   def userService: UserService
 
+  def rememberMeService: RememberMeService
+
   def credentialsProvider: CredentialsProvider
 
   lazy val applicationController = new ApplicationController(messagesApi, env)
@@ -36,7 +38,7 @@ trait Controllers {
 
   lazy val userController = new UserController(messagesApi, env, userService, passwordHasher)
 
-  lazy val sessionController = new SessionController(messagesApi, env, userService, credentialsProvider)
+  lazy val sessionController = new SessionController(messagesApi, env, userService, credentialsProvider, rememberMeService)
 
 
 

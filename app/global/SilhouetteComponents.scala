@@ -26,6 +26,8 @@ trait SilhouetteComponents {
 
   def passwordInfoRepository: DelegableAuthInfoDAO[PasswordInfo]
 
+  lazy val clock = Clock()
+
   lazy val passwordHasher = new BCryptPasswordHasher()
 
   lazy val authInfoRepository = new DelegableAuthInfoRepository(passwordInfoRepository)
@@ -38,7 +40,9 @@ trait SilhouetteComponents {
       config,
       None,
       new DefaultFingerprintGenerator(false),
-      new SecureRandomIDGenerator(), Clock())
+      new SecureRandomIDGenerator(),
+      clock
+    )
   }
 
   lazy val env = Environment(userService, authenticatorService, Seq(), EventBus())

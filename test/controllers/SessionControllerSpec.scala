@@ -1,5 +1,6 @@
 package controllers
 
+import com.mohiva.play.silhouette.api.util.JsonFormats._
 import com.mohiva.play.silhouette.api.util.PasswordInfo
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.daos.DelegableAuthInfoDAO
@@ -9,12 +10,16 @@ import models.User
 import org.mindrot.jbcrypt.BCrypt
 import org.mockito.Matchers
 import org.specs2.mock.Mockito
+import play.api.libs.Crypto
+import play.api.libs.json.Json
+import play.api.mvc.Cookie
 import play.api.test.{FakeRequest, PlaySpecification, WithApplicationLoader}
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext}
 import repositories.UserRepository
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.reflect.ClassTag
 
 class SessionControllerSpec extends PlaySpecification with Mockito {
@@ -154,7 +159,34 @@ class SessionControllerSpec extends PlaySpecification with Mockito {
       // then
       status(result) must beEqualTo(SEE_OTHER)
       redirectLocation(result) must beSome(routes.UserController.show(1).url)
-      session(result).get("session.username") must beSome
+      cookies(result).get("id") must beSome[Cookie]
+    }
+
+    "remember user if rememberMe is checked" in new WithController {
+      // given
+      val request = FakeRequest("POST", "/login").withFormUrlEncodedBody(
+        "email" -> userA.email,
+        "password" -> "testPassword",
+        "rememberMe" -> "true"
+      )
+      userRepositoryMock.findByEmail(Matchers.eq(userA.email)) returns(Future.successful(Some(userA.copy(id = Some(1)))))
+      passwordInfoRepositoryMock.find(userA.loginInfo) returns(Future.successful(Option(userA.passwordInfo)))
+
+      // when
+      val Some(result) = route(request)
+
+      // then
+      val c = cookies(result)
+      c.get("id") match {
+        case Some(cookie) => {
+          Json.parse(Crypto.decryptAES(cookie.value)).asOpt(Json.reads[CookieAuthenticator]) match {
+            case Some(auth) => auth.cookieMaxAge must beSome(30.days)
+            case None => failure("Authenticator cookie is not valid.")
+          }
+        }
+        case None => failure("Authenticator cookie not set")
+      }
+
     }
   }
 }

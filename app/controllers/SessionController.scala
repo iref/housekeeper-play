@@ -1,7 +1,7 @@
 package controllers
 
 import com.mohiva.play.silhouette.api.exceptions.ProviderException
-import com.mohiva.play.silhouette.api.util.Credentials
+import com.mohiva.play.silhouette.api.util.{Clock, Credentials}
 import com.mohiva.play.silhouette.api.{LogoutEvent, LoginEvent, Environment, Silhouette}
 import com.mohiva.play.silhouette.impl.authenticators.CookieAuthenticator
 import com.mohiva.play.silhouette.impl.exceptions.IdentityNotFoundException
@@ -12,7 +12,7 @@ import play.api.data.Forms._
 import play.api.i18n.{Messages, MessagesApi}
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.Action
-import services.UserService
+import services.{RememberMeService, UserService}
 
 import scala.concurrent.Future
 
@@ -20,7 +20,8 @@ class SessionController(
     messagesApi: MessagesApi,
     env: Environment[User, CookieAuthenticator],
     userService: UserService,
-    credentialsProvider: CredentialsProvider)
+    credentialsProvider: CredentialsProvider,
+    rememberMeService: RememberMeService)
   extends AuthenticatedController(messagesApi, env) {
 
   import SessionController._
@@ -47,10 +48,9 @@ class SessionController(
           userService.retrieve(loginInfo).flatMap {
             case Some(user) =>
               for {
-                authenticator <- env.authenticatorService.create(loginInfo)
+                authenticator <- env.authenticatorService.create(loginInfo).map(rememberMeService.remember(_, login.rememberMe))
                 value <- env.authenticatorService.init(authenticator)
-                result <- env.authenticatorService.embed(value,
-                  Redirect(routes.UserController.show(user.id.get)).withSession("session.username" -> user.id.get.toString))
+                result <- env.authenticatorService.embed(value, Redirect(routes.UserController.show(user.id.get)))
               } yield {
                 env.eventBus.publish(LoginEvent(user, rs, request2Messages))
                 result
@@ -67,12 +67,13 @@ class SessionController(
 }
 
 object SessionController {
-  case class Login(email: String, password: String)
+  case class Login(email: String, password: String, rememberMe: Boolean)
 
   val loginForm = Form(
     mapping(
       "email" -> email,
-      "password" -> nonEmptyText()
+      "password" -> nonEmptyText(),
+      "rememberMe" -> boolean
     )(Login.apply)(Login.unapply)
   )
 }
