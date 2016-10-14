@@ -27,7 +27,7 @@ class ShoppingListRepositorySpec extends Specification {
       val allLists = Await.result(shoppingListRepository.all, 1.second)
 
       // then
-      allLists must have size(2)
+      allLists must have size (2)
     }
 
     "get empty list if no shopping list was created" in new Database {
@@ -55,7 +55,7 @@ class ShoppingListRepositorySpec extends Specification {
       sld.shoppingList.id must beSome(shoppingListId)
       sld.shoppingList.title must beEqualTo(shoppingListA.title)
       sld.shoppingList.description must beEqualTo(shoppingListA.description)
-      sld.items must have size(2)
+      sld.items must have size (2)
     }
 
     "find None for nonexistent shopping list id" in new Database {
@@ -80,7 +80,7 @@ class ShoppingListRepositorySpec extends Specification {
       stored.id must not beNone
       val found = Await.result(shoppingListRepository.find(stored.id.get), 1.second)
       found match {
-        case None => failure("Shopping list was not saved.")
+        case None         => failure("Shopping list was not saved.")
         case Some(detail) => detail.shoppingList must beEqualTo(stored)
       }
     }
@@ -107,7 +107,7 @@ class ShoppingListRepositorySpec extends Specification {
 
       // then
       val allLists = Await.result(shoppingListRepository.all, 1.second)
-      allLists must have size(2)
+      allLists must have size (2)
     }
 
     "update existing shopping list in database" in new Database {
@@ -121,7 +121,7 @@ class ShoppingListRepositorySpec extends Specification {
       // then
       val updated = Await.result(shoppingListRepository.find(id), 1.second)
       updated match {
-        case None => failure("Shopping list wasn't updated.")
+        case None         => failure("Shopping list wasn't updated.")
         case Some(detail) => detail.shoppingList must beEqualTo(toUpdate)
       }
     }
@@ -136,7 +136,7 @@ class ShoppingListRepositorySpec extends Specification {
 
       // then
       val all = Await.result(shoppingListRepository.all, 1.second)
-      all must have size(1)
+      all must have size (1)
 
       val storedList = all.head
       storedList.title must beEqualTo(shoppingListA.title)
@@ -153,7 +153,7 @@ class ShoppingListRepositorySpec extends Specification {
 
       // then
       val all = Await.result(shoppingListRepository.all, 1.second)
-      all must have size(1)
+      all must have size (1)
 
       val storedList = all.head
       storedList.title must beEqualTo(shoppingListA.title)

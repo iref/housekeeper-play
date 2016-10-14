@@ -1,4 +1,4 @@
-@(shoppingLists: List[ShoppingList])(implicit flash: Flash, session: Session)
+@(shoppingLists: List[ShoppingList])(implicit flash: Flash, session: Session, webJarAssets: WebJarAssets)
 
 @main("Shopping Lists | Housekeeper") {
     @flash.get("info").map { info =>

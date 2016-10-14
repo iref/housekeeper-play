@@ -1,19 +1,19 @@
 package controllers
 
-import cats.std.future._
+import cats.instances.future._
 import org.mindrot.jbcrypt.BCrypt
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.Action
 import repositories.UserRepository
 import utils.http._
 
 import scala.concurrent.Future
 
-class SessionController(userRepository: UserRepository, val messagesApi: MessagesApi)
-    extends Controller with I18nSupport {
+class SessionController(userRepository: UserRepository, messagesApi: MessagesApi, webJarAssets: WebJarAssets)
+    extends ViewController(messagesApi, webJarAssets) {
 
   import SessionController._
 

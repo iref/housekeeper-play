@@ -1,22 +1,14 @@
 package controllers
 
-import play.api.i18n.MessagesApi
+import com.softwaremill.macwire.wire
+import org.webjars.play.WebJarComponents
+import play.api.i18n.I18nComponents
 import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRepository}
 
 /**
  * Bootstrapping of controllers.
  */
-trait Controllers {
-
-  lazy val applicationController = new ApplicationController
-
-  lazy val shoppingListController = new ShoppingListController(shoppingListRepository, messagesApi)
-
-  lazy val shoppingListItemController = new ShoppingListItemController(shoppingListRepository, shoppingListItemRepository, messagesApi)
-
-  lazy val userController = new UserController(userRepository, messagesApi)
-
-  lazy val sessionController = new SessionController(userRepository, messagesApi)
+trait Controllers extends I18nComponents with WebJarComponents {
 
   def userRepository: UserRepository
 
@@ -24,6 +16,14 @@ trait Controllers {
 
   def shoppingListItemRepository: ShoppingListItemRepository
 
-  def messagesApi: MessagesApi
+  lazy val applicationController = wire[ApplicationController]
+
+  lazy val shoppingListController = wire[ShoppingListController]
+
+  lazy val shoppingListItemController = wire[ShoppingListItemController]
+
+  lazy val userController = wire[UserController]
+
+  lazy val sessionController = wire[SessionController]
 
 }

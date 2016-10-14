@@ -1,56 +1,77 @@
-name := """housekeeper"""
+import com.typesafe.sbt.SbtScalariform.{ScalariformKeys, _}
+import sbt.Keys._
+import scalariform.formatter.preferences._
 
-version := "1.0-SNAPSHOT"
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file("."))
+  .enablePlugins(PlayScala)
+  .settings(commonSettings)
+  .settings(playSettings)
+  .settings(scoverageSettings)
+  .settings(scalariformSettings)
 
-scalaVersion := "2.11.6"
+lazy val commonSettings = Seq(
+  name := """housekeeper""",
+  version := "1.0-SNAPSHOT",
+  scalaVersion := "2.11.8",
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-feature",
+    "-unchecked",
+    "-Xfatal-warnings",
+    "-Xlint:_",
+    "-Yno-adapted-args",
+    "-encoding", "UTF-8"
+  ),
+  scapegoatVersion := "1.1.0",
+  // sbt settings
+  incOptions := incOptions.value.withNameHashing(true),
+  updateOptions := updateOptions.value.withCachedResolution(true),
 
-scalacOptions ++= Seq(
-  "-deprecation",
-  "-feature",
-  "-unchecked",
-  "-Xfatal-warnings",
-  "-Xlint:_",
-  "-Yno-adapted-args",
-  "-encoding", "UTF-8"
+  // dependencies
+  resolvers ++= Seq(
+    "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+    "Scalaz Bintray Repository" at "https://dl.bintray.com/scalaz/releases"),
+  libraryDependencies ++= dependencies
 )
 
-// sbt settings
-//incOptions := incOptions.value.withNameHashing(true)
-//updateOptions := updateOptions.value.withCachedResolution(true)
+lazy val scalariformSettings = SbtScalariform.scalariformSettings ++ Seq(
+  ScalariformKeys.preferences := ScalariformKeys.preferences.value
+    .setPreference(AlignSingleLineCaseStatements, true)
+    .setPreference(AlignSingleLineCaseStatements.MaxArrowIndent, 100)
+    .setPreference(PreserveSpaceBeforeArguments, true)
+    .setPreference(DanglingCloseParenthesis, Preserve)
+    .setPreference(DoubleIndentClassDeclaration, true)
+    .setPreference(SpacesAroundMultiImports, false)
+)
 
-// we are using local build of play-slick, because evolutions aren't possible until play-slick#269 is solved
-val playSlickVersion = "1.0.1"
+lazy val scoverageSettings = Seq(
+  coverageMinimum := 60,
+  coverageFailOnMinimum := true,
+  coverageHighlighting := scalaBinaryVersion.value != "2.10"
+)
 
-val slickVersion = "3.0.0"
+lazy val playSettings = Seq(
+  routesGenerator := play.routes.compiler.InjectedRoutesGenerator
+)
 
-val macwireVersion = "1.0.1"
+val playSlickVersion = "2.0.0"
 
-resolvers ++= Seq(
-  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-  "Scalaz Bintray Repository" at "https://dl.bintray.com/scalaz/releases")
+val slickVersion = "3.1.1"
 
-libraryDependencies ++= Seq(
+lazy val dependencies = Seq(
   cache,
   ws,
-  "org.spire-math" %% "cats-core" % "0.3.0",
-  "org.webjars" %% "webjars-play" % "2.4.0-1",
-  "com.adrianhurt" %% "play-bootstrap3" % "0.4.3-P24-SNAPSHOT",
-  "com.softwaremill.macwire" %% "macros" % macwireVersion,
-  "com.softwaremill.macwire" %% "runtime" % macwireVersion,
-  "org.mindrot" % "jbcrypt" % "0.3m",
-  "com.typesafe.slick" %% "slick" % slickVersion,
-  "com.typesafe.play" %% "play-slick" % playSlickVersion,
-  "com.typesafe.play" %% "play-slick-evolutions" % playSlickVersion,
-  "org.spire-math" %% "cats" % "0.3.0",
-  "org.slf4j" % "slf4j-nop" % "1.7.12",
-  "org.postgresql" % "postgresql" % "9.4-1203-jdbc42"
+  "org.webjars"              %% "webjars-play"          % "2.5.0-3",
+  "com.adrianhurt"           %% "play-bootstrap"        % "1.1-P25-B3",
+  "com.softwaremill.macwire" %% "macros"                % "2.2.5",
+  "org.mindrot"               % "jbcrypt"               % "0.3m",
+  "com.typesafe.slick"       %% "slick"                 % slickVersion,
+  "com.typesafe.play"        %% "play-slick"            % playSlickVersion,
+  "com.typesafe.play"        %% "play-slick-evolutions" % playSlickVersion,
+  "org.typelevel"            %% "cats-core"             % "0.7.2",
+  "org.slf4j"                 % "slf4j-api"             % "1.7.12",
+  "org.postgresql"            % "postgresql"            % "9.4.1211",
+  "com.h2database"            % "h2"                    % "1.4.192"         % "test",
+  specs2                                                                    % "test"
 )
-
-libraryDependencies ++= Seq(
-  specs2,
-  "com.h2database" % "h2" % "1.4.187"
-).map(_ % "test")
-
-routesGenerator := play.routes.compiler.InjectedRoutesGenerator

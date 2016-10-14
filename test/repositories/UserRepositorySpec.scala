@@ -29,7 +29,7 @@ class UserRepositorySpec extends Specification {
       Await.ready(userRepository.save(userA), 1.second)
 
       val users = Await.result(userRepository.all, 1.second)
-      users must have size(1)
+      users must have size (1)
     }
 
     "find existing user by id" in new Database {
@@ -108,7 +108,7 @@ class UserRepositorySpec extends Specification {
 
       // then
       val list = Await.result(userRepository.all, 1.second)
-      list must have size(1)
+      list must have size (1)
 
       val updated = list.head
       updated.email must beEqualTo(userA.email)
@@ -127,7 +127,7 @@ class UserRepositorySpec extends Specification {
 
       // then
       val list = Await.result(userRepository.all, 1.second)
-      list must have size(1)
+      list must have size (1)
 
       val updated = list.head
       updated.email must beEqualTo(userA.email)

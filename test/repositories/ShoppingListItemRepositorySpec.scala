@@ -47,7 +47,7 @@ class ShoppingListItemRepositorySpec extends Specification {
     notFound must beNone
   }
 
-  "not remove any item if id does not exist" in new Database{
+  "not remove any item if id does not exist" in new Database {
     // given
     val Some(id) = Await.result(shoppingListRepository.save(shoppingList), 1.second).id
     val item = ShoppingListItem("Super item", 1, Some(12.0))

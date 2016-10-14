@@ -1,7 +1,7 @@
 package utils
 
 import cats.data.OptionT
-import cats.std.future._
+import cats.instances.future._
 import play.api.mvc.Result
 
 import scala.concurrent.{ExecutionContext, Future}

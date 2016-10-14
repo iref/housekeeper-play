@@ -1,19 +1,22 @@
 package repositories
 
-import play.api.db.slick.DatabaseConfigProvider
+import com.softwaremill.macwire._
+import play.api.db.slick.{DbName, SlickComponents}
 import repositories.impl.{SlickShoppingListItemRepository, SlickShoppingListRepository, SlickUserRepository}
+import slick.backend.DatabaseConfig
+import slick.driver.JdbcProfile
 
 /**
  * Trait provides repositories implementations.
  */
-trait Repositories {
+trait Repositories extends SlickComponents {
 
-  def dbConfigProvider: DatabaseConfigProvider
+  private lazy val dbConfig: DatabaseConfig[JdbcProfile] = api.dbConfig(DbName("default"))
 
-  lazy val shoppingListRepository: ShoppingListRepository = new SlickShoppingListRepository(dbConfigProvider)
+  lazy val shoppingListRepository: ShoppingListRepository = wire[SlickShoppingListRepository]
 
-  lazy val shoppingListItemRepository: ShoppingListItemRepository = new SlickShoppingListItemRepository(dbConfigProvider)
+  lazy val shoppingListItemRepository: ShoppingListItemRepository = wire[SlickShoppingListItemRepository]
 
-  lazy val userRepository: UserRepository = new SlickUserRepository(dbConfigProvider)
+  lazy val userRepository: UserRepository = wire[SlickUserRepository]
 
 }

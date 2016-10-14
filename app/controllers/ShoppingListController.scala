@@ -1,21 +1,21 @@
 package controllers
 
+import cats.instances.future._
 import models.ShoppingList
-import utils.http._
-import cats.std.future._
 import play.api.data.Form
 import play.api.data.Forms._
-import play.api.i18n.{I18nSupport, MessagesApi}
+import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits._
-import play.api.mvc.{Action, Controller}
+import play.api.mvc.Action
 import repositories.ShoppingListRepository
+import utils.http._
 
 import scala.concurrent.Future
 
 case class ShoppingListData(title: String, description: Option[String])
 
-class ShoppingListController(shoppingListRepository: ShoppingListRepository, val messagesApi: MessagesApi)
-    extends Controller with I18nSupport {
+class ShoppingListController(shoppingListRepository: ShoppingListRepository, messagesApi: MessagesApi, webJarAssets: WebJarAssets)
+    extends ViewController(messagesApi, webJarAssets) {
 
   import ShoppingListController._
 
