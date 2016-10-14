@@ -8,4 +8,4 @@ CREATE TABLE "shopping_lists" (
 );
 
 # --- !Downs
-DROP TABLE IF EXISTS shopping_lists;
+DROP TABLE IF EXISTS "shopping_lists";
