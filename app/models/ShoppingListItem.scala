@@ -8,5 +8,5 @@ import slick.profile.SqlProfile.ColumnOption
 import scala.concurrent.Future
 
 case class ShoppingListItem(name: String, quantity: Int, priceForOne: Option[BigDecimal] = None,
-                            shoppingListId: Option[Int] = None, id: Option[Int] = None)
+  shoppingListId: Option[Int] = None, id: Option[Int] = None)
 

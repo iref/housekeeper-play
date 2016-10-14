@@ -10,7 +10,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 private[repositories] class SlickUserRepository(protected val dbConfigProvider: DatabaseConfigProvider)
-  extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository with UsersTable {
+    extends HasDatabaseConfigProvider[JdbcProfile] with UserRepository with UsersTable {
 
   import driver.api._
 

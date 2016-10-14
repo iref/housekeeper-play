@@ -20,7 +20,7 @@ import slick.profile.BasicProfile
 // So without building play-slick locally, it won't compile
 // Should work after Issue #269 in play-slick is resolved and new artifact is published
 trait HousekeeperComponent extends BuiltInComponents with SlickComponents
-  with I18nComponents with Controllers with Repositories with EvolutionsComponents with SlickEvolutionsComponents {
+    with I18nComponents with Controllers with Repositories with EvolutionsComponents with SlickEvolutionsComponents {
 
   lazy val dbConfigProvider: DatabaseConfigProvider = new DatabaseConfigProvider {
     override def get[P <: BasicProfile]: DatabaseConfig[P] = api.dbConfig(DbName("default"))

@@ -1,6 +1,5 @@
 package repositories
 
-
 import models.ShoppingListItem
 
 import scala.concurrent.Future

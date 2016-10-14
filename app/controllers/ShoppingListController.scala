@@ -15,7 +15,7 @@ import scala.concurrent.Future
 case class ShoppingListData(title: String, description: Option[String])
 
 class ShoppingListController(shoppingListRepository: ShoppingListRepository, val messagesApi: MessagesApi)
-  extends Controller with I18nSupport {
+    extends Controller with I18nSupport {
 
   import ShoppingListController._
 

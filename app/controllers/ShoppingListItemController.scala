@@ -13,9 +13,10 @@ import repositories.{ShoppingListItemRepository, ShoppingListRepository}
 
 import scala.concurrent.Future
 
-class ShoppingListItemController(shoppingListRepository: ShoppingListRepository,
-                                 shoppingListItemRepository: ShoppingListItemRepository,
-                                 val messagesApi: MessagesApi) extends Controller with I18nSupport {
+class ShoppingListItemController(
+  shoppingListRepository: ShoppingListRepository,
+    shoppingListItemRepository: ShoppingListItemRepository,
+    val messagesApi: MessagesApi) extends Controller with I18nSupport {
 
   import ShoppingListItemController._
 
@@ -69,7 +70,7 @@ object ShoppingListItemController {
     mapping(
       "name" -> nonEmptyText,
       "quantity" -> number(min = 1),
-      "priceForOne" -> optional(bigDecimal(10, 2) verifying(min(BigDecimal(0))))
+      "priceForOne" -> optional(bigDecimal(10, 2) verifying (min(BigDecimal(0))))
     )(FormData.apply)(FormData.unapply))
 
   case class FormData(name: String, quantity: Int, priceForOne: Option[BigDecimal])

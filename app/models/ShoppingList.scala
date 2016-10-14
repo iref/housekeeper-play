@@ -11,4 +11,3 @@ case class ShoppingList(title: String, description: Option[String] = None, id: O
 
 case class ShoppingListDetail(shoppingList: ShoppingList, items: Seq[ShoppingListItem])
 
-

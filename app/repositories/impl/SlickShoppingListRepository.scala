@@ -10,8 +10,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 private[repositories] class SlickShoppingListRepository(protected val dbConfigProvider: DatabaseConfigProvider)
-  extends HasDatabaseConfigProvider[JdbcProfile] with ShoppingListRepository
-  with ShoppingListTable with ShoppingListItemsTable {
+    extends HasDatabaseConfigProvider[JdbcProfile] with ShoppingListRepository
+    with ShoppingListTable with ShoppingListItemsTable {
 
   import driver.api._
 

@@ -14,8 +14,9 @@ import cats.std.future._
 import utils.http._
 import scala.concurrent.Future
 
-class UserController(userRepository: UserRepository,
-                     val messagesApi: MessagesApi) extends Controller with I18nSupport {
+class UserController(
+  userRepository: UserRepository,
+    val messagesApi: MessagesApi) extends Controller with I18nSupport {
 
   import UserController._
 
@@ -81,9 +82,9 @@ object UserController {
       "email" -> email,
       "password" -> nonEmptyText(6),
       "passwordConfirmation" -> nonEmptyText(6)
-    )(Registration.apply)(Registration.unapply) verifying("Password does not match with confirmation", { formData =>
-      formData.password == formData.passwordConfirmation
-    })
+    )(Registration.apply)(Registration.unapply) verifying ("Password does not match with confirmation", { formData =>
+        formData.password == formData.passwordConfirmation
+      })
   )
 
   case class UserProfile(name: String, email: String) {

@@ -13,7 +13,7 @@ import utils.http._
 import scala.concurrent.Future
 
 class SessionController(userRepository: UserRepository, val messagesApi: MessagesApi)
-  extends Controller with I18nSupport {
+    extends Controller with I18nSupport {
 
   import SessionController._
 

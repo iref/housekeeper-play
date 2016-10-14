@@ -9,7 +9,7 @@ import slick.driver.JdbcProfile
 import scala.concurrent.Future
 
 private[repositories] class SlickShoppingListItemRepository(protected val dbConfigProvider: DatabaseConfigProvider)
-  extends HasDatabaseConfigProvider[JdbcProfile] with ShoppingListItemRepository with ShoppingListItemsTable {
+    extends HasDatabaseConfigProvider[JdbcProfile] with ShoppingListItemRepository with ShoppingListItemsTable {
 
   import driver.api._
 
