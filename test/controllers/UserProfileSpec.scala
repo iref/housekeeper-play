@@ -1,8 +1,9 @@
 package controllers
 
+import play.api.libs.Codecs
+
 import controllers.UserController.UserProfile
 import models.User
-import play.api.libs.Codecs
 import test.HousekeeperSpec
 
 class UserProfileSpec extends HousekeeperSpec {

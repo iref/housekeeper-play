@@ -1,7 +1,8 @@
 package controllers
 
-import controllers.UserController.Registration
 import org.mindrot.jbcrypt.BCrypt
+
+import controllers.UserController.Registration
 import test.HousekeeperSpec
 
 class RegistrationSpec extends HousekeeperSpec {

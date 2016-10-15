@@ -1,16 +1,17 @@
 package controllers
 
+import scala.concurrent.Future
+
 import cats.instances.future._
-import models.ShoppingList
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.Action
+
+import models.ShoppingList
 import repositories.ShoppingListRepository
 import utils.http._
-
-import scala.concurrent.Future
 
 case class ShoppingListData(title: String, description: Option[String])
 

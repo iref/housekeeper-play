@@ -1,12 +1,13 @@
 package global
 
 import com.softwaremill.macwire._
-import controllers.{Assets, Controllers}
 import play.api.ApplicationLoader.Context
 import play.api.db.evolutions.{DynamicEvolutions, EvolutionsComponents}
 import play.api.db.slick.evolutions.SlickEvolutionsComponents
 import play.api.routing.Router
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, LoggerConfigurator}
+
+import controllers.{Assets, Controllers}
 import repositories.Repositories
 import router.Routes
 

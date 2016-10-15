@@ -1,17 +1,17 @@
 package controllers
 
-import models.User
-import org.mindrot.jbcrypt.BCrypt
-import play.api.Application
-import play.api.test.FakeRequest
-import repositories.UserRepository
-
 import scala.concurrent.duration._
 import scala.concurrent.Future
 
-class UserControllerSpec extends HousekeeperControllerSpec {
+import org.mindrot.jbcrypt.BCrypt
+import play.api.Application
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 
-  import play.api.test.Helpers._
+import models.User
+import repositories.UserRepository
+
+class UserControllerSpec extends HousekeeperControllerSpec {
 
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 

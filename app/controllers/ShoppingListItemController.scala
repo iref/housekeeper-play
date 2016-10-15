@@ -1,17 +1,18 @@
 package controllers
 
+import scala.concurrent.Future
+
 import cats.instances.future._
-import models.ShoppingListItem
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.i18n.MessagesApi
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.Action
+
+import models.ShoppingListItem
 import repositories.{ShoppingListItemRepository, ShoppingListRepository}
 import utils.http._
-
-import scala.concurrent.Future
 
 class ShoppingListItemController(
     shoppingListRepository: ShoppingListRepository,

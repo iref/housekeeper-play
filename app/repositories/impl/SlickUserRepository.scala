@@ -1,14 +1,15 @@
 package repositories.impl
 
-import models.User
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig, HasDatabaseConfigProvider}
-import repositories.UserRepository
-import repositories.impl.tables.UsersTable
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import play.api.db.slick.HasDatabaseConfig
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import models.User
+import repositories.UserRepository
+import repositories.impl.tables.UsersTable
 
 private[repositories] class SlickUserRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
     extends HasDatabaseConfig[JdbcProfile] with UserRepository with UsersTable {

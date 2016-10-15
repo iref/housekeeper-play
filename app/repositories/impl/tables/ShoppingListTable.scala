@@ -1,8 +1,9 @@
 package repositories.impl.tables
 
-import models.ShoppingList
 import slick.driver.JdbcProfile
 import slick.profile.SqlProfile.ColumnOption
+
+import models.ShoppingList
 
 private[impl] trait ShoppingListTable {
   protected val driver: JdbcProfile
@@ -14,7 +15,9 @@ private[impl] trait ShoppingListTable {
     def description = column[Option[String]]("description", ColumnOption.Nullable)
     def id = column[Option[Int]]("id", slick.ast.ColumnOption.PrimaryKey, slick.ast.ColumnOption.AutoInc)
 
+    // scalastyle:off
     def * = (title, description, id) <> ((ShoppingList.apply _).tupled, ShoppingList.unapply)
+    // scalastyle:on
   }
 
   protected val shoppingLists = TableQuery[ShoppingLists]

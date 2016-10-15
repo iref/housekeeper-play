@@ -1,8 +1,9 @@
 package controllers
 
+import scala.concurrent.Future
+
 import cats.instances.future._
 import com.google.common.base.Charsets
-import models.User
 import org.mindrot.jbcrypt.BCrypt
 import play.api.data.Form
 import play.api.data.Forms._
@@ -10,10 +11,10 @@ import play.api.i18n.MessagesApi
 import play.api.libs.Codecs
 import play.api.libs.concurrent.Execution.Implicits._
 import play.api.mvc.Action
+
+import models.User
 import repositories.UserRepository
 import utils.http._
-
-import scala.concurrent.Future
 
 class UserController(
     userRepository: UserRepository,

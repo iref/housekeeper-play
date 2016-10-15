@@ -2,9 +2,10 @@ package repositories
 
 import com.softwaremill.macwire._
 import play.api.db.slick.{DbName, SlickComponents}
-import repositories.impl.{SlickShoppingListItemRepository, SlickShoppingListRepository, SlickUserRepository}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
+
+import repositories.impl._
 
 /**
  * Trait provides repositories implementations.

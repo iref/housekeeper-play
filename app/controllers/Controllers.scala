@@ -3,6 +3,7 @@ package controllers
 import com.softwaremill.macwire.wire
 import org.webjars.play.WebJarComponents
 import play.api.i18n.I18nComponents
+
 import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRepository}
 
 /**

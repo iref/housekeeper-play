@@ -1,14 +1,15 @@
 package repositories.impl
 
-import models.{ShoppingList, ShoppingListDetail}
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig, HasDatabaseConfigProvider}
-import repositories.ShoppingListRepository
-import repositories.impl.tables.{ShoppingListItemsTable, ShoppingListTable}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+import play.api.db.slick.HasDatabaseConfig
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import models.{ShoppingList, ShoppingListDetail}
+import repositories.ShoppingListRepository
+import repositories.impl.tables.{ShoppingListItemsTable, ShoppingListTable}
 
 private[repositories] class SlickShoppingListRepository(protected val dbConfig: DatabaseConfig[JdbcProfile])
     extends HasDatabaseConfig[JdbcProfile] with ShoppingListRepository

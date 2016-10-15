@@ -5,9 +5,10 @@ import org.scalamock.scalatest.MockFactory
 import play.api.{Application, ApplicationLoader, BuiltInComponentsFromContext, Environment, Mode}
 import play.api.test.Helpers
 import play.api.routing.Router
-import test.HousekeeperSpec
+
 import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRepository}
 import router.Routes
+import test.HousekeeperSpec
 
 /**
  * Extended [[HousekeeperSpec]] to unit test controllers.

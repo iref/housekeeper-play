@@ -3,9 +3,6 @@ package repositories
 import models.User
 import test.HousekeeperSpec
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
-
 class UserRepositorySpec extends HousekeeperSpec with Database {
 
   val userA = User("John Doe", "doe@example.com", "test_password")
@@ -88,7 +85,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       val toUpdate = userA.copy(id = Some(userId), name = "New awesome name", email = "new@example.com", password = "newTestPassword")
 
       // when
-      Await.ready(userRepository.update(toUpdate), 1.second)
+      userRepository.update(toUpdate).futureValue
 
       // then
       val Some(updated) = userRepository.find(userId).futureValue

@@ -8,6 +8,7 @@ import play.api.inject.DefaultApplicationLifecycle
 import play.api.{Configuration, Environment}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
+
 import test.HousekeeperSpec
 
 /**

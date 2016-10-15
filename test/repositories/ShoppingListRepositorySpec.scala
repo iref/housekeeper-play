@@ -1,11 +1,10 @@
 package repositories
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
 import models.{ShoppingList, ShoppingListItem}
 import test.HousekeeperSpec
-
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
 
 class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
 
@@ -106,7 +105,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       shoppingListRepository.remove(Int.MaxValue).futureValue
 
       // then
-      val allLists = Await.result(shoppingListRepository.all, 1.second)
+      val allLists = shoppingListRepository.all.futureValue
       allLists should have size (2)
     }
 

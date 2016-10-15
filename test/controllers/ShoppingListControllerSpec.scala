@@ -1,15 +1,15 @@
 package controllers
 
-import models.{ShoppingList, ShoppingListDetail, ShoppingListItem}
-import play.api.Application
-import play.api.test.FakeRequest
-import repositories.ShoppingListRepository
-
 import scala.concurrent.Future
 
-class ShoppingListControllerSpec extends HousekeeperControllerSpec {
+import play.api.Application
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 
-  import play.api.test.Helpers._
+import models.{ShoppingList, ShoppingListDetail, ShoppingListItem}
+import repositories.ShoppingListRepository
+
+class ShoppingListControllerSpec extends HousekeeperControllerSpec {
 
   val detail = ShoppingListDetail(
     ShoppingList("Test list", Some("Test description"), Some(1)),

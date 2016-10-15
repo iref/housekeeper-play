@@ -1,15 +1,16 @@
 package controllers
 
-import models.User
+import scala.concurrent.Future
+
 import org.mindrot.jbcrypt.BCrypt
 import play.api.Application
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
+
+import models.User
 import repositories.UserRepository
 
-import scala.concurrent.Future
-
 class SessionControllerSpec extends HousekeeperControllerSpec {
-  import play.api.test.Helpers._
 
   val userA = User(
     "John Doe",
