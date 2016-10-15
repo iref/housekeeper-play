@@ -24,6 +24,7 @@ lazy val commonSettings = Seq(
     "-encoding", "UTF-8"
   ),
   scapegoatVersion := "1.1.0",
+  scapegoatIgnoredFiles := Seq(".*/app/views/.*", ".*/twirl/main/views/.*"),
   // sbt settings
   incOptions := incOptions.value.withNameHashing(true),
   updateOptions := updateOptions.value.withCachedResolution(true),
