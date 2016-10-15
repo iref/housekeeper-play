@@ -2,9 +2,9 @@ package controllers
 
 import controllers.UserController.Registration
 import org.mindrot.jbcrypt.BCrypt
-import org.specs2.mutable.Specification
+import test.HousekeeperSpec
 
-class RegistrationSpec extends Specification {
+class RegistrationSpec extends HousekeeperSpec {
 
   "Registration" should {
     "create user with hashed password" in {
@@ -15,10 +15,10 @@ class RegistrationSpec extends Specification {
       val user = registration.toUser
 
       // then
-      user.id must beNone
-      user.email must beEqualTo("doe@example.com")
-      user.name must beEqualTo("John Doe")
-      BCrypt.checkpw("testPassword", user.password) must beTrue
+      user.id should be(None)
+      user.email should be("doe@example.com")
+      user.name should be("John Doe")
+      BCrypt.checkpw("testPassword", user.password) should be(true)
     }
   }
 

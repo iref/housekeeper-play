@@ -1,50 +1,49 @@
 package controllers
 
 import models.{ShoppingList, ShoppingListDetail, ShoppingListItem}
-import org.specs2.execute.{AsResult, Result}
-import org.specs2.mock.Mockito
 import play.api.Application
-import play.api.test.{FakeRequest, PlaySpecification}
+import play.api.test.FakeRequest
 import repositories.ShoppingListRepository
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-class ShoppingListControllerSpec extends PlaySpecification with Mockito {
+class ShoppingListControllerSpec extends HousekeeperControllerSpec {
+
+  import play.api.test.Helpers._
 
   val detail = ShoppingListDetail(
     ShoppingList("Test list", Some("Test description"), Some(1)),
     List()
   )
 
-  def withShoppingRepository[T: AsResult](f: (ShoppingListRepository, Application) => T): Result = {
-    WithControllers.running((components, app) => f(components.shoppingListRepository, app))
+  def withShoppingRepository[T](f: (ShoppingListRepository, Application) => T): T = {
+    running((components, app) => f(components.shoppingListRepository, app))
   }
 
   "#index" should {
     "render shopping list template" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
-      shoppingListRepository.all returns Future.successful(List())
+      (shoppingListRepository.all _) when () returns (Future.successful(List()))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists"))
 
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("Shopping Lists")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("Shopping Lists")
     }
 
     "render info message if there aren't any shopping lists" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
-      shoppingListRepository.all returns Future.successful(List())
+      (shoppingListRepository.all _) when () returns (Future.successful(List()))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists"))
 
       // then
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("No shopping lists were created yet.")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("No shopping lists were created yet.")
     }
 
     "render all shopping lists" in withShoppingRepository { (shoppingListRepository, app) =>
@@ -52,17 +51,17 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       val shoppingLists = List(
         ShoppingList("First list", Some("Newbie list"), Some(1)),
         ShoppingList("Second list", Some("My awesome list"), Some(2)))
-      shoppingListRepository.all returns Future.successful(shoppingLists)
+      (shoppingListRepository.all _) when () returns (Future.successful(shoppingLists))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists"))
 
       // then
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must not contain ("No shopping lists were created yet.")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should not include ("No shopping lists were created yet.")
       shoppingLists.foreach { sl =>
-        contentAsString(result) must contain(sl.title)
+        contentAsString(result) should include(sl.title)
       }
     }
   }
@@ -71,28 +70,28 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
 
     "render shopping list detail template" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
-      shoppingListRepository.find(1) returns Future.successful(None)
+      (shoppingListRepository.find _) when (1) returns (Future.successful(None))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1"))
 
       // then
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain ("Shopping List Detail | Housekeeper")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include ("Shopping List Detail | Housekeeper")
     }
 
     "render message if shopping detail doesn't exists" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
-      shoppingListRepository.find(1) returns Future.successful(None)
+      (shoppingListRepository.find _) when (1) returns (Future.successful(None))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1"))
 
       // then
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain ("Shopping list was not found.")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("Shopping list was not found.")
     }
 
     "render shopping list detail" in withShoppingRepository { (shoppingListRepository, app) =>
@@ -104,20 +103,20 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
           ShoppingListItem("Macbook Air 13", 1, Some(1000.0), Some(1), Some(2))
         )
       )
-      shoppingListRepository.find(1) returns Future.successful(Some(shoppingListDetail))
+      (shoppingListRepository.find _) when (1) returns (Future.successful(Some(shoppingListDetail)))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1"))
 
       // then
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain(shoppingListDetail.shoppingList.title)
-      contentAsString(result) must contain(shoppingListDetail.shoppingList.description.get)
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include(shoppingListDetail.shoppingList.title)
+      contentAsString(result) should include(shoppingListDetail.shoppingList.description.get)
       shoppingListDetail.items.foreach { item =>
-        contentAsString(result) must contain(item.name)
-        contentAsString(result) must contain(item.quantity.toString)
-        contentAsString(result) must contain(item.priceForOne.map(_.toString).getOrElse("-"))
+        contentAsString(result) should include(item.name)
+        contentAsString(result) should include(item.quantity.toString)
+        contentAsString(result) should include(item.priceForOne.map(_.toString).getOrElse("-"))
       }
     }
   }
@@ -128,9 +127,9 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/new"))
 
       // then
-      status(result) must equalTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("New Shopping List")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("New Shopping List")
     }
   }
 
@@ -143,24 +142,24 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must equalTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"title_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"title_error")
     }
 
     "redirect with error message if saving fails" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
       val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
       val newShoppingList = ShoppingList("Test", Some("Test description"))
-      shoppingListRepository.save(newShoppingList) returns Future.successful(newShoppingList)
+      (shoppingListRepository.save _) when (newShoppingList) returns (Future.successful(newShoppingList))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must equalTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
-      flash(result).get("error") must beSome
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ShoppingListController.index().url))
+      flash(result).get("error") shouldBe defined
     }
 
     "save valid shopping list" in withShoppingRepository { (shoppingListRepository, app) =>
@@ -170,66 +169,67 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
         "title" -> "test"
       )
       val expectedShoppingList = ShoppingList("test", Some("testdescription"))
-      shoppingListRepository.save(expectedShoppingList) returns Future.successful(expectedShoppingList.copy(id = Some(1)))
+      (shoppingListRepository.save _) when (expectedShoppingList) returns (Future.successful(expectedShoppingList.copy(id = Some(1))))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must equalTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
-      flash(result).get("error") must beNone
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ShoppingListController.show(1).url))
+      flash(result).get("error") should be(None)
     }
   }
 
   "#delete" should {
     "remove list from repository" in withShoppingRepository { (shoppingListRepository, app) =>
       // when
+      (shoppingListRepository.remove _) when (1) returns (Future.successful(1))
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/delete"))
-      Await.ready(result, 1.second)
+      result.futureValue
 
       // then
-      there was one(shoppingListRepository).remove(1)
+      (shoppingListRepository.remove _).verify(1)
     }
 
     "redirect to shopping list index" in withShoppingRepository { (shoppingListRepository, app) =>
-      shoppingListRepository.remove(1) returns Future.successful(1)
+      (shoppingListRepository.remove _) when (1) returns (Future.successful(1))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/delete"))
 
       // then
-      status(result) must equalTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
-      flash(result).get("info") must beSome
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ShoppingListController.index().url))
+      flash(result).get("info") shouldBe defined
     }
   }
 
   "#edit" should {
     "render edit template" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
-      shoppingListRepository.find(1) returns Future.successful(Some(detail))
+      (shoppingListRepository.find _) when (1) returns (Future.successful(Some(detail)))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/edit"))
 
       // then
-      status(result) must beEqualTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("Edit shopping list")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("Edit shopping list")
     }
 
     "redirect to shopping list index if list was not found" in withShoppingRepository { (shoppingListRepository, app) =>
       // given
-      shoppingListRepository.find(1) returns Future.successful(None)
+      (shoppingListRepository.find _) when (1) returns (Future.successful(None))
 
       // when
       val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/edit"))
 
       // then
-      status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ShoppingListController.index().url)
-      flash(result).get("error") must beSome
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ShoppingListController.index().url))
+      flash(result).get("error") shouldBe defined
     }
   }
 
@@ -242,9 +242,9 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"title_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"title_error")
     }
 
     "update existing list" in withShoppingRepository { (shoppingListRepository, app) =>
@@ -254,16 +254,16 @@ class ShoppingListControllerSpec extends PlaySpecification with Mockito {
         "description" -> "New update description"
       )
       val toUpdate = ShoppingList("New updated title", Option("New update description"), Option(1))
-      shoppingListRepository.update(toUpdate) returns Future.successful(1)
+      (shoppingListRepository.update _) when (toUpdate) returns (Future.successful(1))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ShoppingListController.show(1).url)
-      flash(result).get("info") must beSome
-      there was one(shoppingListRepository).update(toUpdate)
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ShoppingListController.show(1).url))
+      flash(result).get("info") shouldBe defined
+      (shoppingListRepository.update _).verify(toUpdate)
     }
   }
 

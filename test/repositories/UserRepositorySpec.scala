@@ -1,138 +1,138 @@
 package repositories
 
 import models.User
-import org.specs2.mutable.Specification
+import test.HousekeeperSpec
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-class UserRepositorySpec extends Specification {
+class UserRepositorySpec extends HousekeeperSpec with Database {
 
   val userA = User("John Doe", "doe@example.com", "test_password")
 
   "UserRepository" should {
 
-    "save new user" in new Database {
+    "save new user" in {
       // when
-      val Some(id) = Await.result(userRepository.save(userA), 1.second).id
+      val Some(id) = userRepository.save(userA).futureValue.id
 
       // then
-      val Some(found) = Await.result(userRepository.find(id), 1.second)
-      found.id must beSome(id)
-      found.name must beEqualTo(userA.name)
-      found.email must beEqualTo(userA.email)
-      found.password must beEqualTo(userA.password)
+      val Some(found) = userRepository.find(id).futureValue
+      found.id should be(Some(id))
+      found.name should be(userA.name)
+      found.email should be(userA.email)
+      found.password should be(userA.password)
     }
 
-    "return all users" in new Database {
+    "return all users" in {
       // when
-      Await.ready(userRepository.save(userA), 1.second)
+      userRepository.save(userA).futureValue
 
-      val users = Await.result(userRepository.all, 1.second)
-      users must have size (1)
+      val users = userRepository.all.futureValue
+      users should have size (1)
     }
 
-    "find existing user by id" in new Database {
+    "find existing user by id" in {
       // given
-      val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
+      val Some(userId) = userRepository.save(userA).futureValue.id
 
       // when
-      val Some(found) = Await.result(userRepository.find(userId), 1.second)
+      val Some(found) = userRepository.find(userId).futureValue
 
       // then
-      found.id must beSome(userId)
-      found.name must beEqualTo(userA.name)
-      found.email must beEqualTo(userA.email)
-      found.password must beEqualTo(userA.password)
+      found.id should be(Some(userId))
+      found.name should be(userA.name)
+      found.email should be(userA.email)
+      found.password should be(userA.password)
     }
 
-    "find nonexistent user returns None" in new Database {
+    "find nonexistent user returns None" in {
       // given
-      Await.ready(userRepository.save(userA), 1.second)
+      userRepository.save(userA).futureValue
 
       // when
-      val notFound = Await.result(userRepository.find(Int.MaxValue), 1.second)
+      val notFound = userRepository.find(Int.MaxValue).futureValue
 
       // then
-      notFound must beNone
+      notFound should be(None)
     }
 
-    "find existing user by email" in new Database {
+    "find existing user by email" in {
       // given
-      val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
+      val Some(userId) = userRepository.save(userA).futureValue.id
 
       // when
-      val Some(found) = Await.result(userRepository.findByEmail(userA.email), 1.second)
+      val Some(found) = userRepository.findByEmail(userA.email).futureValue
 
       // then
-      found.id must beSome(userId)
-      found.name must beEqualTo(userA.name)
-      found.email must beEqualTo(userA.email)
-      found.password must beEqualTo(userA.password)
+      found.id should be(Some(userId))
+      found.name should be(userA.name)
+      found.email should be(userA.email)
+      found.password should be(userA.password)
     }
 
-    "findByEmail returns None if user does not exist" in new Database {
+    "findByEmail returns None if user does not exist" in {
       // given
-      Await.ready(userRepository.save(userA), 1.second)
+      userRepository.save(userA).futureValue
 
       // when
-      val notFound = Await.result(userRepository.findByEmail("nonexisting@email.com"), 1.second)
+      val notFound = userRepository.findByEmail("nonexisting@email.com").futureValue
 
       // then
-      notFound must beNone
+      notFound should be(None)
     }
 
-    "update existing user" in new Database {
+    "update existing user" in {
       // given
-      val Some(userId) = Await.result(userRepository.save(userA), 1.second).id
+      val Some(userId) = userRepository.save(userA).futureValue.id
       val toUpdate = userA.copy(id = Some(userId), name = "New awesome name", email = "new@example.com", password = "newTestPassword")
 
       // when
       Await.ready(userRepository.update(toUpdate), 1.second)
 
       // then
-      val Some(updated) = Await.result(userRepository.find(userId), 1.second)
-      updated.email must beEqualTo("new@example.com")
-      updated.name must beEqualTo("New awesome name")
-      updated.password must beEqualTo("newTestPassword")
-      updated.id must beSome(userId)
+      val Some(updated) = userRepository.find(userId).futureValue
+      updated.email should be("new@example.com")
+      updated.name should be("New awesome name")
+      updated.password should be("newTestPassword")
+      updated.id should be(Some(userId))
     }
 
-    "not update user without id" in new Database {
+    "not update user without id" in {
       // given
-      Await.ready(userRepository.save(userA), 1.second)
+      userRepository.save(userA).futureValue
       val toUpdate = userA.copy(name = "User without id", email = "newemail@example.com", password = "newTestPassword")
 
       // when
-      Await.ready(userRepository.update(toUpdate), 1.second)
+      userRepository.update(toUpdate).futureValue
 
       // then
-      val list = Await.result(userRepository.all, 1.second)
-      list must have size (1)
+      val list = userRepository.all.futureValue
+      list should have size (1)
 
       val updated = list.head
-      updated.email must beEqualTo(userA.email)
-      updated.name must beEqualTo(userA.name)
-      updated.password must beEqualTo(userA.password)
+      updated.email should be(userA.email)
+      updated.name should be(userA.name)
+      updated.password should be(userA.password)
     }
 
-    "not update other users" in new Database {
+    "not update other users" in {
       // given
-      Await.ready(userRepository.save(userA), 1.second)
+      userRepository.save(userA).futureValue
       val toUpdate = userA.copy(name = "Nonexistent user", email = "nonexistent@example.com",
         password = "nonexistent@example.com", id = Some(Int.MaxValue))
 
       // when
-      Await.ready(userRepository.update(toUpdate), 1.second)
+      userRepository.update(toUpdate).futureValue
 
       // then
-      val list = Await.result(userRepository.all, 1.second)
-      list must have size (1)
+      val list = userRepository.all.futureValue
+      list should have size (1)
 
       val updated = list.head
-      updated.email must beEqualTo(userA.email)
-      updated.name must beEqualTo(userA.name)
-      updated.password must beEqualTo(userA.password)
+      updated.email should be(userA.email)
+      updated.name should be(userA.name)
+      updated.password should be(userA.password)
     }
 
   }

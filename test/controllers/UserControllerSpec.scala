@@ -2,39 +2,39 @@ package controllers
 
 import models.User
 import org.mindrot.jbcrypt.BCrypt
-import org.specs2.execute.{AsResult, Result}
-import org.specs2.mock.Mockito
 import play.api.Application
-import play.api.test.{FakeRequest, PlaySpecification}
+import play.api.test.FakeRequest
 import repositories.UserRepository
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
-class UserControllerSpec extends PlaySpecification with Mockito {
+class UserControllerSpec extends HousekeeperControllerSpec {
+
+  import play.api.test.Helpers._
 
   val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
-  def withUserRepository[T: AsResult](f: (UserRepository, Application) => T): Result = {
-    WithControllers.running((components, app) => f(components.userRepository, app))
+  def withUserRepository[T](f: (UserRepository, Application) => T) = {
+    running((components, app) => f(components.userRepository, app))
   }
 
   "#register" should {
 
-    "render new user template" in WithControllers.running { (_, app) =>
+    "render new user template" in running { (_, app) =>
       // when
       val Some(result) = route(app, FakeRequest(GET, "/users/new"))
 
       // then
-      status(result) must beEqualTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("Create new account")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("Create new account")
     }
   }
 
   "#create" should {
 
-    "not create user without name" in WithControllers.running { (_, app) =>
+    "not create user without name" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
         "email" -> userA.email,
@@ -44,12 +44,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"name_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"name_error")
     }
 
-    "not create user without email" in WithControllers.running { (_, app) =>
+    "not create user without email" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
         "name" -> userA.name,
@@ -59,12 +59,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"email_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"email_error")
     }
 
-    "not create user without password" in WithControllers.running { (_, app) =>
+    "not create user without password" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
         "name" -> userA.name,
@@ -76,12 +76,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"password_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"password_error")
     }
 
-    "not create user without passwordConfirmation" in WithControllers.running { (_, app) =>
+    "not create user without passwordConfirmation" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
         "name" -> userA.name,
@@ -93,12 +93,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"passwordConfirmation_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"passwordConfirmation_error")
     }
 
-    "not create user with password shorter than 6 characters" in WithControllers.running { (_, app) =>
+    "not create user with password shorter than 6 characters" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
         "name" -> userA.name,
@@ -111,12 +111,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"password_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"password_error")
     }
 
-    "not create user if password does not match confirmation" in WithControllers.running { (_, app) =>
+    "not create user if password does not match confirmation" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
         "name" -> userA.name,
@@ -129,9 +129,9 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("div class=\"alert alert-danger")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("div class=\"alert alert-danger")
     }
 
     "redirect to user detail after successful user creation" in withUserRepository { (userRepository, app) =>
@@ -141,16 +141,16 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "email" -> userA.email,
         "password" -> userA.password,
         "passwordConfirmation" -> userA.password)
-      userRepository.save(any[User]) returns Future.successful(userA.copy(id = Some(2)))
+      (userRepository.save _) when (*) returns (Future.successful(userA.copy(id = Some(2))))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.UserController.show(2).url)
-      flash(result).get("info") must beSome
-      session(result).get("session.username") must beSome
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.UserController.show(2).url))
+      flash(result).get("info") shouldBe defined
+      session(result).get("session.username") shouldBe defined
     }
   }
 
@@ -159,30 +159,30 @@ class UserControllerSpec extends PlaySpecification with Mockito {
     "render user detail template" in withUserRepository { (userRepository, app) =>
       // given
       val request = FakeRequest(GET, "/users/1")
-      userRepository.find(1) returns Future.successful(Some(userA.copy(id = Some(1))))
+      (userRepository.find _) when (1) returns (Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("User profile")
-      contentAsString(result) must contain(userA.name)
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("User profile")
+      contentAsString(result) should include(userA.name)
     }
 
     "redirect to index if user does not exists" in withUserRepository { (userRepository, app) =>
       // given
       val request = FakeRequest(GET, "/users/1")
-      userRepository.find(1) returns Future.successful(None)
+      (userRepository.find _) when (1) returns (Future.successful(None))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ApplicationController.index().url)
-      flash(result).get("error") must beSome
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ApplicationController.index().url))
+      flash(result).get("error") shouldBe defined
     }
   }
 
@@ -190,35 +190,35 @@ class UserControllerSpec extends PlaySpecification with Mockito {
     "render edit user template for existing user" in withUserRepository { (userRepository, app) =>
       // given
       val request = FakeRequest(GET, "/users/1/edit")
-      userRepository.find(1) returns Future.successful(Some(userA.copy(id = Some(1))))
+      (userRepository.find _) when (1) returns (Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(OK)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("Edit profile")
+      status(result) should be(OK)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("Edit profile")
     }
 
     "redirect to index if user with does not exist" in withUserRepository { (userRepository, app) =>
       // given
       val request = FakeRequest(GET, "/users/1/edit")
-      userRepository.find(1) returns Future.successful(None)
+      (userRepository.find _) when (1) returns (Future.successful(None))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.ApplicationController.index().url)
-      flash(result).get("error") must beSome
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.ApplicationController.index().url))
+      flash(result).get("error") shouldBe defined
     }
   }
 
   "#update" should {
 
-    "not update user without name" in WithControllers.running { (_, app) =>
+    "not update user without name" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody("email" -> "test@example.com")
 
@@ -226,12 +226,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"name_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"name_error")
     }
 
-    "not update user without email" in WithControllers.running { (_, app) =>
+    "not update user without email" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody("name" -> "test")
 
@@ -239,12 +239,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"email_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"email_error")
     }
 
-    "not update user password if confirmation is missing" in WithControllers.running { (_, app) =>
+    "not update user password if confirmation is missing" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> "test",
@@ -257,12 +257,12 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"passwordConfirmation_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"passwordConfirmation_error")
     }
 
-    "not update user password if it does not match confirmation" in WithControllers.running { (_, app) =>
+    "not update user password if it does not match confirmation" in running { (_, app) =>
       // given
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
         "name" -> userA.name,
@@ -275,9 +275,9 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("div class=\"alert alert-danger")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("div class=\"alert alert-danger")
     }
 
     "update user in repository" in withUserRepository { (userRepository, app) =>
@@ -288,18 +288,17 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "password" -> "newUpdatedPasswordXXX",
         "passwordConfirmation" -> "newUpdatedPasswordXXX"
       )
-      val toUpdate = User("Updated user name", "updated@example.com", BCrypt.hashpw("newUpdatedPasswordXXX", BCrypt.gensalt()), Some(1))
-      userRepository.update(toUpdate) returns Future.successful(1)
+      (userRepository.update _) when (*) returns (Future.successful(1))
 
       // when
       val Some(result) = route(app, request)
-      Await.ready(result, 1.second)
+      result.futureValue
 
       // then
-      there was one(userRepository).update(any[User])
+      (userRepository.update _) verify (*)
     }
 
-    "update user if password is not provided" in WithControllers.running { (_, app) =>
+    "update user if password is not provided" in running { (_, app) =>
       // given
       val expectedUser = User("Passwordless user update", "updated@example.com", userA.password, Some(1))
       val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
@@ -311,10 +310,10 @@ class UserControllerSpec extends PlaySpecification with Mockito {
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(BAD_REQUEST)
-      contentType(result) must beSome("text/html")
-      contentAsString(result) must contain("span id=\"password_error")
-      contentAsString(result) must contain("span id=\"passwordConfirmation_error")
+      status(result) should be(BAD_REQUEST)
+      contentType(result) should be(Some("text/html"))
+      contentAsString(result) should include("span id=\"password_error")
+      contentAsString(result) should include("span id=\"passwordConfirmation_error")
     }
 
     "redirect to user detail after successful update" in withUserRepository { (userRepository, app) =>
@@ -330,14 +329,14 @@ class UserControllerSpec extends PlaySpecification with Mockito {
         "email" -> email,
         "password" -> password,
         "passwordConfirmation" -> password)
-      userRepository.update(any[User]) returns Future.successful(1)
+      (userRepository.update _) when (*) returns (Future.successful(1))
 
       // when
       val Some(result) = route(app, request)
 
       // then
-      status(result) must beEqualTo(SEE_OTHER)
-      redirectLocation(result) must beSome(routes.UserController.show(1).url)
+      status(result) should be(SEE_OTHER)
+      redirectLocation(result) should be(Some(routes.UserController.show(1).url))
     }
 
   }

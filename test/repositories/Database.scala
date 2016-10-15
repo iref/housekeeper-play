@@ -1,36 +1,48 @@
 package repositories
 
-import org.specs2.mutable.BeforeAfter
-import play.api._
+import org.scalatest.Outcome
 import play.api.db.evolutions.Evolutions
-import play.api.db.slick.SlickComponents
 import play.api.db.slick.evolutions.SlickEvolutionsComponents
-import play.api.inject._
+import play.api.db.slick.{DbName, SlickComponents}
+import play.api.inject.DefaultApplicationLifecycle
+import play.api.{Configuration, Environment}
 import slick.backend.DatabaseConfig
 import slick.driver.JdbcProfile
+import test.HousekeeperSpec
 
 /**
  * Helper trait for initializing database for Repository specs.
  */
-trait Database extends BeforeAfter with SlickComponents with SlickEvolutionsComponents with Repositories {
+trait Database
+    extends SlickComponents
+    with SlickEvolutionsComponents
+    with Repositories { self: HousekeeperSpec =>
+
   lazy val applicationLifecycle = new DefaultApplicationLifecycle
 
   lazy val environment: Environment = Environment.simple()
 
   lazy val configuration: Configuration = Database.testConfiguration
 
-  lazy val dbConfig: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig("slick.dbs.default", configuration.underlying)
+  lazy val dbConfig: DatabaseConfig[JdbcProfile] = api.dbConfig(DbName("default"))
 
-  def after = {
-    dbApi.databases().foreach { db =>
-      Evolutions.cleanupEvolutions(db, true)
-      db.shutdown()
+  override protected def withFixture(test: NoArgTest): Outcome = {
+    try {
+      setupSchema()
+      test()
+    } finally {
+      dropSchema()
     }
   }
-  def before: Any = {
-    dbApi.databases().foreach { db =>
-      Evolutions.applyEvolutions(db)
-    }
+
+  def dropSchema(): Unit = {
+    val db = dbApi.database("default")
+    Evolutions.cleanupEvolutions(db)
+  }
+
+  def setupSchema(): Unit = {
+    val db = dbApi.database("default")
+    Evolutions.applyEvolutions(db)
   }
 }
 

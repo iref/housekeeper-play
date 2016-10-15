@@ -2,10 +2,10 @@ package controllers
 
 import controllers.UserController.UserProfile
 import models.User
-import org.specs2.mutable.Specification
 import play.api.libs.Codecs
+import test.HousekeeperSpec
 
-class UserProfileSpec extends Specification {
+class UserProfileSpec extends HousekeeperSpec {
 
   val user = User("John Doe", "doe@example.com", "testPassword", Some(1))
 
@@ -13,9 +13,9 @@ class UserProfileSpec extends Specification {
     "create correct profile from user" in {
       val profile = UserProfile(user)
 
-      profile.name must beEqualTo(user.name)
-      profile.email must beEqualTo(user.email)
-      profile.gravatar must not beEmpty
+      profile.name should be(user.name)
+      profile.email should be(user.email)
+      profile.gravatar should not be (empty)
     }
 
     "create correct gravatar url" in {
@@ -24,7 +24,7 @@ class UserProfileSpec extends Specification {
 
       val gravatar = UserProfile(user).gravatar
 
-      gravatar must beEqualTo(expectedUrl)
+      gravatar should be(expectedUrl)
     }
   }
 
