@@ -31,11 +31,15 @@ class UserController(
     registrationForm.bindFromRequest.fold(
       formWithErrors => Future(BadRequest(views.html.user.newUser(formWithErrors))),
       data => {
-        userRepository.save(data.toUser).map { newUser =>
-          Redirect(routes.UserController.show(newUser.id.get))
-            .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
-            .withSession("session.username" -> newUser.id.get.toString)
-        }
+        val result = for {
+          newUser <- HttpResult.fromFuture(userRepository.save(data.toUser))
+          id <- HttpResult(newUser.id)
+        } yield Redirect(routes.UserController.show(id))
+          .flashing("info" -> "Welcome to Housekeeper! Your account has been created.")
+          .withSession("session.username" -> id.toString)
+
+        result.runResult(BadRequest(views.html.user.newUser(registrationForm.fill(data)))
+          .flashing("error" -> "Something went wrong"))
       }
     )
   }
