@@ -15,5 +15,5 @@ To start application use following command:
 
 You can also specify configuration file path:
 
-`> ./scripts/run.sh conf/application-prod.conf'
+`> ./scripts/run.sh conf/application-prod.conf`
 
