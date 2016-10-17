@@ -63,7 +63,6 @@ val slickVersion = "3.1.1"
 lazy val dependencies = Seq(
   cache,
   ws,
-  "org.webjars"              %% "webjars-play"                % "2.5.0-3",
   "com.adrianhurt"           %% "play-bootstrap"              % "1.1-P25-B3",
   "com.softwaremill.macwire" %% "macros"                      % "2.2.5",
   "org.mindrot"               % "jbcrypt"                     % "0.3m",

@@ -35,4 +35,3 @@ POST        /users                                        controllers.UserContro
 
 # Map static resources from the /public folder to the /assets URL path
 GET         /assets/*file                                 controllers.Assets.at(path="/public", file)
-GET         /wassets/*file                                controllers.WebJarAssets.at(file)

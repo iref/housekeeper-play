@@ -30,8 +30,6 @@
   <!-- Only errors for some loggers -->
   <logger name="com.gargoylesoftware.htmlunit.javascript" level="ERROR" />
 
-  <logger name="slick.jdbc.JdbcBackend.statement" level="DEBUG" />
-
   <root level="INFO">
     <appender-ref ref="ASYNCFILE" />
     <appender-ref ref="ASYNCSTDOUT" />
