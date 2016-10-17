@@ -3,14 +3,14 @@ package repositories
 import play.api.db.DBApi
 import play.api.db.evolutions.Evolutions
 
-import test.HousekeeperSpec
+import test.{FakeApplication, HousekeeperSpec}
 
 /**
  * Helper trait for initializing database for Repository specs.
  */
-trait Database { self: HousekeeperSpec =>
+trait Database extends FakeApplication { self: HousekeeperSpec =>
 
-  protected def withDatabase(test: Repositories => Unit): Unit = {
+  protected def withDatabase[T](test: Repositories => T): T = {
     running { (components, _) =>
       try {
         setupSchema(components.dbApi)

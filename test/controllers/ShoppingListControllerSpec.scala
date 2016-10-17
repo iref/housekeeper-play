@@ -2,43 +2,45 @@ package controllers
 
 import scala.concurrent.Future
 
-import play.api.Application
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 import models.{ShoppingList, ShoppingListDetail, ShoppingListItem}
 import repositories.ShoppingListRepository
+import test.{I18nTestComponents, HousekeeperSpec}
 
-class ShoppingListControllerSpec extends HousekeeperControllerSpec {
+class ShoppingListControllerSpec extends HousekeeperSpec {
 
   val detail = ShoppingListDetail(
     ShoppingList("Test list", Some("Test description"), Some(1)),
     List()
   )
 
-  def withShoppingRepository[T](f: (ShoppingListRepository, Application) => T): T = {
-    running((components, app) => f(components.shoppingListRepository, app))
-  }
+  val shoppingListRepository = stub[ShoppingListRepository]
+
+  val shoppingListController = new ShoppingListController(
+    shoppingListRepository,
+    I18nTestComponents.messagesApi)
 
   "#index" should {
-    "render shopping list template" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render shopping list template" in {
       // given
       (shoppingListRepository.all _) when () returns (Future.successful(List()))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists"))
+      val result = shoppingListController.index()(FakeRequest())
 
       status(result) should be(OK)
       contentType(result) should be(Some("text/html"))
       contentAsString(result) should include("Shopping Lists")
     }
 
-    "render info message if there aren't any shopping lists" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render info message if there aren't any shopping lists" in {
       // given
       (shoppingListRepository.all _) when () returns (Future.successful(List()))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists"))
+      val result = shoppingListController.index()(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -46,7 +48,7 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("No shopping lists were created yet.")
     }
 
-    "render all shopping lists" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render all shopping lists" in {
       // given
       val shoppingLists = List(
         ShoppingList("First list", Some("Newbie list"), Some(1)),
@@ -54,7 +56,7 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       (shoppingListRepository.all _) when () returns (Future.successful(shoppingLists))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists"))
+      val result = shoppingListController.index()(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -68,12 +70,12 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
 
   "#show" should {
 
-    "render shopping list detail template" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render shopping list detail template" in {
       // given
       (shoppingListRepository.find _) when (1) returns (Future.successful(None))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1"))
+      val result = shoppingListController.show(1)(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -81,12 +83,12 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include ("Shopping List Detail | Housekeeper")
     }
 
-    "render message if shopping detail doesn't exists" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render message if shopping detail doesn't exists" in {
       // given
       (shoppingListRepository.find _) when (1) returns (Future.successful(None))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1"))
+      val result = shoppingListController.show(1)(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -94,7 +96,7 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("Shopping list was not found.")
     }
 
-    "render shopping list detail" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render shopping list detail" in {
       // given
       val shoppingListDetail = ShoppingListDetail(
         ShoppingList("First list", Some("Newbie list"), Some(1)),
@@ -106,7 +108,7 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       (shoppingListRepository.find _) when (1) returns (Future.successful(Some(shoppingListDetail)))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1"))
+      val result = shoppingListController.show(1)(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -122,9 +124,9 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
   }
 
   "#newList" should {
-    "render newList template" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render newList template" in {
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/new"))
+      val result = shoppingListController.newList()(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -134,12 +136,13 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
   }
 
   "#save" should {
-    "not save shopping list without title" in withShoppingRepository { (shoppingListRepository, app) =>
+    "not save shopping list without title" in {
       // given
-      val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(("description", "testdescription"))
+      val request = FakeRequest()
+        .withFormUrlEncodedBody(("description", "testdescription"))
 
       // when
-      val Some(result) = route(app, request)
+      val result = shoppingListController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -147,14 +150,14 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"title_error")
     }
 
-    "redirect with error message if saving fails" in withShoppingRepository { (shoppingListRepository, app) =>
+    "redirect with error message if saving fails" in {
       // given
-      val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
+      val request = FakeRequest().withFormUrlEncodedBody(("title", "Test"), ("description", "Test description"))
       val newShoppingList = ShoppingList("Test", Some("Test description"))
       (shoppingListRepository.save _) when (newShoppingList) returns (Future.successful(newShoppingList))
 
       // when
-      val Some(result) = route(app, request)
+      val result = shoppingListController.save()(request)
 
       // then
       status(result) should be(SEE_OTHER)
@@ -162,9 +165,9 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       flash(result).get("error") shouldBe defined
     }
 
-    "save valid shopping list" in withShoppingRepository { (shoppingListRepository, app) =>
+    "save valid shopping list" in {
       // given
-      val request = FakeRequest(POST, "/shopping-lists").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "description" -> "testdescription",
         "title" -> "test"
       )
@@ -172,7 +175,7 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       (shoppingListRepository.save _) when (expectedShoppingList) returns (Future.successful(expectedShoppingList.copy(id = Some(1))))
 
       // when
-      val Some(result) = route(app, request)
+      val result = shoppingListController.save()(request)
 
       // then
       status(result) should be(SEE_OTHER)
@@ -182,21 +185,21 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
   }
 
   "#delete" should {
-    "remove list from repository" in withShoppingRepository { (shoppingListRepository, app) =>
+    "remove list from repository" in {
       // when
       (shoppingListRepository.remove _) when (1) returns (Future.successful(1))
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/delete"))
+      val result = shoppingListController.delete(1)(FakeRequest())
       result.futureValue
 
       // then
       (shoppingListRepository.remove _).verify(1)
     }
 
-    "redirect to shopping list index" in withShoppingRepository { (shoppingListRepository, app) =>
+    "redirect to shopping list index" in {
       (shoppingListRepository.remove _) when (1) returns (Future.successful(1))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/delete"))
+      val result = shoppingListController.delete(1)(FakeRequest())
 
       // then
       status(result) should be(SEE_OTHER)
@@ -206,12 +209,12 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
   }
 
   "#edit" should {
-    "render edit template" in withShoppingRepository { (shoppingListRepository, app) =>
+    "render edit template" in {
       // given
       (shoppingListRepository.find _) when (1) returns (Future.successful(Some(detail)))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/edit"))
+      val result = shoppingListController.edit(1)(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -219,12 +222,12 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("Edit shopping list")
     }
 
-    "redirect to shopping list index if list was not found" in withShoppingRepository { (shoppingListRepository, app) =>
+    "redirect to shopping list index if list was not found" in {
       // given
       (shoppingListRepository.find _) when (1) returns (Future.successful(None))
 
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/shopping-lists/1/edit"))
+      val result = shoppingListController.edit(1)(FakeRequest())
 
       // then
       status(result) should be(SEE_OTHER)
@@ -234,12 +237,13 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
   }
 
   "#update" should {
-    "not update list without title" in withShoppingRepository { (shoppingListRepository, app) =>
+    "not update list without title" in {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/edit").withFormUrlEncodedBody("description" -> "New test description")
+      val request = FakeRequest()
+        .withFormUrlEncodedBody("description" -> "New test description")
 
       // when
-      val Some(result) = route(app, request)
+      val result = shoppingListController.update(1)(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -247,9 +251,9 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"title_error")
     }
 
-    "update existing list" in withShoppingRepository { (shoppingListRepository, app) =>
+    "update existing list" in {
       // given
-      val request = FakeRequest(POST, "/shopping-lists/1/edit").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "title" -> "New updated title",
         "description" -> "New update description"
       )
@@ -257,7 +261,7 @@ class ShoppingListControllerSpec extends HousekeeperControllerSpec {
       (shoppingListRepository.update _) when (toUpdate) returns (Future.successful(1))
 
       // when
-      val Some(result) = route(app, request)
+      val result = shoppingListController.update(1)(request)
 
       // then
       status(result) should be(SEE_OTHER)

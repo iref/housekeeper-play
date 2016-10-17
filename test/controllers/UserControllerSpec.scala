@@ -4,26 +4,28 @@ import scala.concurrent.duration._
 import scala.concurrent.Future
 
 import org.mindrot.jbcrypt.BCrypt
-import play.api.Application
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 import models.User
 import repositories.UserRepository
+import test.{FakeApp, I18nTestComponents, HousekeeperSpec}
 
-class UserControllerSpec extends HousekeeperControllerSpec {
+class UserControllerSpec extends HousekeeperSpec {
 
-  val userA = User("John Doe", "doe@example.com", BCrypt.hashpw("testPassword", BCrypt.gensalt()))
+  val userA = User(
+    "John Doe",
+    "doe@example.com",
+    BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
-  def withUserRepository[T](f: (UserRepository, Application) => T) = {
-    running((components, app) => f(components.userRepository, app))
-  }
+  val userRepository = stub[UserRepository]
+  val userController = new UserController(userRepository, I18nTestComponents.messagesApi)
 
   "#register" should {
 
-    "render new user template" in running { (_, app) =>
+    "render new user template" in {
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/users/new"))
+      val result = userController.register()(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -34,14 +36,15 @@ class UserControllerSpec extends HousekeeperControllerSpec {
 
   "#create" should {
 
-    "not create user without name" in running { (_, app) =>
+    "not create user without name" in {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "email" -> userA.email,
-        "password" -> userA.password, "passwordConfirmation" -> userA.password)
+        "password" -> userA.password,
+        "passwordConfirmation" -> userA.password)
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -49,14 +52,15 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"name_error")
     }
 
-    "not create user without email" in running { (_, app) =>
+    "not create user without email" in {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
-        "password" -> userA.password, "passwordConfirmation" -> userA.password)
+        "password" -> userA.password,
+        "passwordConfirmation" -> userA.password)
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -64,16 +68,16 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"email_error")
     }
 
-    "not create user without password" in running { (_, app) =>
+    "not create user without password" in {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "passwordConfirmation" -> userA.password
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -81,16 +85,16 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"password_error")
     }
 
-    "not create user without passwordConfirmation" in running { (_, app) =>
+    "not create user without passwordConfirmation" in {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "password" -> userA.password
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -98,9 +102,9 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"passwordConfirmation_error")
     }
 
-    "not create user with password shorter than 6 characters" in running { (_, app) =>
+    "not create user with password shorter than 6 characters" in {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "password" -> "abcde",
@@ -108,7 +112,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -116,9 +120,9 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"password_error")
     }
 
-    "not create user if password does not match confirmation" in running { (_, app) =>
+    "not create user if password does not match confirmation" in {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "password" -> userA.password,
@@ -126,7 +130,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -134,9 +138,9 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("div class=\"alert alert-danger")
     }
 
-    "redirect to user detail after successful user creation" in withUserRepository { (userRepository, app) =>
+    "redirect to user detail after successful user creation" in FakeApp {
       // given
-      val request = FakeRequest(POST, "/users").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "password" -> userA.password,
@@ -144,7 +148,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       (userRepository.save _) when (*) returns (Future.successful(userA.copy(id = Some(2))))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.save()(request)
 
       // then
       status(result) should be(SEE_OTHER)
@@ -156,13 +160,14 @@ class UserControllerSpec extends HousekeeperControllerSpec {
 
   "#show" should {
 
-    "render user detail template" in withUserRepository { (userRepository, app) =>
+    "render user detail template" in {
       // given
-      val request = FakeRequest(GET, "/users/1")
-      (userRepository.find _) when (1) returns (Future.successful(Some(userA.copy(id = Some(1)))))
+      val request = FakeRequest()
+      (userRepository.find _) when (1) returns (
+        Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.show(1)(request)
 
       // then
       status(result) should be(OK)
@@ -171,13 +176,13 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include(userA.name)
     }
 
-    "redirect to index if user does not exists" in withUserRepository { (userRepository, app) =>
+    "redirect to index if user does not exists" in {
       // given
-      val request = FakeRequest(GET, "/users/1")
+      val request = FakeRequest()
       (userRepository.find _) when (1) returns (Future.successful(None))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.show(1)(request)
 
       // then
       status(result) should be(SEE_OTHER)
@@ -187,13 +192,14 @@ class UserControllerSpec extends HousekeeperControllerSpec {
   }
 
   "#edit" should {
-    "render edit user template for existing user" in withUserRepository { (userRepository, app) =>
+    "render edit user template for existing user" in {
       // given
-      val request = FakeRequest(GET, "/users/1/edit")
-      (userRepository.find _) when (1) returns (Future.successful(Some(userA.copy(id = Some(1)))))
+      val request = FakeRequest()
+      (userRepository.find _) when (1) returns (
+        Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.edit(1)(request)
 
       // then
       status(result) should be(OK)
@@ -201,13 +207,13 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("Edit profile")
     }
 
-    "redirect to index if user with does not exist" in withUserRepository { (userRepository, app) =>
+    "redirect to index if user with does not exist" in {
       // given
-      val request = FakeRequest(GET, "/users/1/edit")
+      val request = FakeRequest()
       (userRepository.find _) when (1) returns (Future.successful(None))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.edit(1)(request)
 
       // then
       status(result) should be(SEE_OTHER)
@@ -218,12 +224,13 @@ class UserControllerSpec extends HousekeeperControllerSpec {
 
   "#update" should {
 
-    "not update user without name" in running { (_, app) =>
+    "not update user without name" in {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody("email" -> "test@example.com")
+      val request = FakeRequest().withFormUrlEncodedBody(
+        "email" -> "test@example.com")
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -231,12 +238,12 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"name_error")
     }
 
-    "not update user without email" in running { (_, app) =>
+    "not update user without email" in {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody("name" -> "test")
+      val request = FakeRequest().withFormUrlEncodedBody("name" -> "test")
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -244,9 +251,9 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"email_error")
     }
 
-    "not update user password if confirmation is missing" in running { (_, app) =>
+    "not update user password if confirmation is missing" in {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> "test",
         "email" -> "test@example.com",
         "password" -> "testPassword2",
@@ -254,7 +261,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -262,9 +269,9 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"passwordConfirmation_error")
     }
 
-    "not update user password if it does not match confirmation" in running { (_, app) =>
+    "not update user password if it does not match confirmation" in {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> userA.name,
         "email" -> userA.email,
         "password" -> "testPasswordXXX",
@@ -272,7 +279,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -280,9 +287,9 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("div class=\"alert alert-danger")
     }
 
-    "update user in repository" in withUserRepository { (userRepository, app) =>
+    "update user in repository" in {
       // given
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> "Updated user name",
         "email" -> "updated@example.com",
         "password" -> "newUpdatedPasswordXXX",
@@ -291,23 +298,27 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       (userRepository.update _) when (*) returns (Future.successful(1))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
       result.futureValue
 
       // then
       (userRepository.update _) verify (*)
     }
 
-    "update user if password is not provided" in running { (_, app) =>
+    "update user if password is not provided" in {
       // given
-      val expectedUser = User("Passwordless user update", "updated@example.com", userA.password, Some(1))
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
+      val expectedUser = User(
+        "Passwordless user update",
+        "updated@example.com",
+        userA.password,
+        Some(1))
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> expectedUser.name,
         "email" -> expectedUser.email
       )
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -316,7 +327,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"passwordConfirmation_error")
     }
 
-    "redirect to user detail after successful update" in withUserRepository { (userRepository, app) =>
+    "redirect to user detail after successful update" in {
       // given
       val name = "Updated user name"
       val email = "updated@example.com"
@@ -324,7 +335,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       val passwordHash = BCrypt.hashpw(password, BCrypt.gensalt())
       val id = Option(1)
 
-      val request = FakeRequest(POST, "/users/1/edit").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "name" -> name,
         "email" -> email,
         "password" -> password,
@@ -332,7 +343,7 @@ class UserControllerSpec extends HousekeeperControllerSpec {
       (userRepository.update _) when (*) returns (Future.successful(1))
 
       // when
-      val Some(result) = route(app, request)
+      val result = userController.update(1)(request)
 
       // then
       status(result) should be(SEE_OTHER)

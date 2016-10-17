@@ -3,29 +3,30 @@ package controllers
 import scala.concurrent.Future
 
 import org.mindrot.jbcrypt.BCrypt
-import play.api.Application
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 
 import models.User
 import repositories.UserRepository
+import test.{FakeApp, I18nTestComponents, HousekeeperSpec}
 
-class SessionControllerSpec extends HousekeeperControllerSpec {
+class SessionControllerSpec extends HousekeeperSpec {
+
+  val userRepository = stub[UserRepository]
+  val sessionController = new SessionController(
+    userRepository,
+    I18nTestComponents.messagesApi)
 
   val userA = User(
     "John Doe",
     "doe@example.com",
     BCrypt.hashpw("testPassword", BCrypt.gensalt()))
 
-  def withUserRepository[T](f: (UserRepository, Application) => T): T = {
-    running((components, app) => f(components.userRepository, app))
-  }
-
   "#login" should {
 
-    "render login template" in running { (_, app) =>
+    "render login template" in {
       // when
-      val Some(result) = route(app, FakeRequest(GET, "/login"))
+      val result = sessionController.login()(FakeRequest())
 
       // then
       status(result) should be(OK)
@@ -36,23 +37,23 @@ class SessionControllerSpec extends HousekeeperControllerSpec {
 
   "#logout" should {
 
-    "remove username from session" in running { (components, app) =>
+    "remove username from session" in FakeApp {
       // given
-      val request = FakeRequest(GET, "/logout").withSession(("session.username", "1"))
+      val request = FakeRequest().withSession(("session.username", "1"))
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.logout()(request)
 
       // then
       session(result).isEmpty should be(true)
     }
 
-    "redirect to home page" in running { (_, app) =>
+    "redirect to home page" in FakeApp {
       // given
-      val request = FakeRequest(GET, "/logout").withSession("session.username" -> "1")
+      val request = FakeRequest().withSession("session.username" -> "1")
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.logout()(request)
 
       // then
       status(result) should be(SEE_OTHER)
@@ -62,13 +63,13 @@ class SessionControllerSpec extends HousekeeperControllerSpec {
 
   "#authenticate" should {
 
-    "not log in user without email" in running { (_, app) =>
+    "not log in user without email" in {
       // given
-      val request = FakeRequest(POST, "/login")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("password" -> "testPassword")
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.authenticate()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -76,13 +77,13 @@ class SessionControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"email_error")
     }
 
-    "not log in user without password" in running { (_, app) =>
+    "not log in user without password" in {
       // given
-      val request = FakeRequest(POST, "/login")
+      val request = FakeRequest()
         .withFormUrlEncodedBody("email" -> "doe@example.com")
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.authenticate()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -90,15 +91,15 @@ class SessionControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("span id=\"password_error")
     }
 
-    "not log in user with invalid password" in withUserRepository { (userRepository, app) =>
+    "not log in user with invalid password" in {
       // given
-      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "email" -> userA.email,
         "password" -> "totally wrong password")
       (userRepository.findByEmail _) when (userA.email) returns (Future.successful(Some(userA)))
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.authenticate()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -106,15 +107,15 @@ class SessionControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("Invalid email address or password.")
     }
 
-    "not log in nonexistent user" in withUserRepository { (userRepository, app) =>
+    "not log in nonexistent user" in {
       // given
-      val request = FakeRequest(POST, "/login").withFormUrlEncodedBody(
+      val request = FakeRequest().withFormUrlEncodedBody(
         "email" -> "nonexisting@email.com",
         "password" -> userA.password)
       (userRepository.findByEmail _) when ("nonexisting@email.com") returns (Future.successful(None))
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.authenticate()(request)
 
       // then
       status(result) should be(BAD_REQUEST)
@@ -122,13 +123,15 @@ class SessionControllerSpec extends HousekeeperControllerSpec {
       contentAsString(result) should include("Invalid email address or password.")
     }
 
-    "log in user" in withUserRepository { (userRepository, app) =>
+    "log in user" in FakeApp {
       // given
-      val request = FakeRequest("POST", "/login").withFormUrlEncodedBody("email" -> userA.email, "password" -> "testPassword")
+      val request = FakeRequest().withFormUrlEncodedBody(
+        "email" -> userA.email,
+        "password" -> "testPassword")
       (userRepository.findByEmail _) when (userA.email) returns (Future.successful(Some(userA.copy(id = Some(1)))))
 
       // when
-      val Some(result) = route(app, request)
+      val result = sessionController.authenticate()(request)
 
       // then
       status(result) should be(SEE_OTHER)
