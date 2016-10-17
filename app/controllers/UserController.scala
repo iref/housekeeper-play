@@ -18,8 +18,7 @@ import utils.http._
 
 class UserController(
     userRepository: UserRepository,
-    messagesApi: MessagesApi,
-    webJarAssets: WebJarAssets) extends ViewController(messagesApi, webJarAssets) {
+    messagesApi: MessagesApi) extends ViewController(messagesApi) {
 
   import UserController._
 

@@ -13,8 +13,8 @@ import play.api.mvc.Action
 import repositories.UserRepository
 import utils.http._
 
-class SessionController(userRepository: UserRepository, messagesApi: MessagesApi, webJarAssets: WebJarAssets)
-    extends ViewController(messagesApi, webJarAssets) {
+class SessionController(userRepository: UserRepository, messagesApi: MessagesApi)
+    extends ViewController(messagesApi) {
 
   import SessionController._
 

@@ -17,8 +17,7 @@ import utils.http._
 class ShoppingListItemController(
     shoppingListRepository: ShoppingListRepository,
     shoppingListItemRepository: ShoppingListItemRepository,
-    messagesApi: MessagesApi,
-    webJarAssets: WebJarAssets) extends ViewController(messagesApi, webJarAssets) {
+    messagesApi: MessagesApi) extends ViewController(messagesApi) {
 
   import ShoppingListItemController._
 

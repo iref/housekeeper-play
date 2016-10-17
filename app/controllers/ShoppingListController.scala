@@ -15,8 +15,8 @@ import utils.http._
 
 case class ShoppingListData(title: String, description: Option[String])
 
-class ShoppingListController(shoppingListRepository: ShoppingListRepository, messagesApi: MessagesApi, webJarAssets: WebJarAssets)
-    extends ViewController(messagesApi, webJarAssets) {
+class ShoppingListController(shoppingListRepository: ShoppingListRepository, messagesApi: MessagesApi)
+    extends ViewController(messagesApi) {
 
   import ShoppingListController._
 

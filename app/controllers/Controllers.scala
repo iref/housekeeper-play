@@ -1,7 +1,6 @@
 package controllers
 
 import com.softwaremill.macwire.wire
-import org.webjars.play.WebJarComponents
 import play.api.i18n.I18nComponents
 
 import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRepository}
@@ -9,7 +8,7 @@ import repositories.{ShoppingListItemRepository, ShoppingListRepository, UserRep
 /**
  * Bootstrapping of controllers.
  */
-trait Controllers extends I18nComponents with WebJarComponents {
+trait Controllers extends I18nComponents {
 
   def userRepository: UserRepository
 
