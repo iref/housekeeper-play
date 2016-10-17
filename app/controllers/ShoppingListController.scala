@@ -13,8 +13,6 @@ import models.ShoppingList
 import repositories.ShoppingListRepository
 import utils.http._
 
-case class ShoppingListData(title: String, description: Option[String])
-
 class ShoppingListController(shoppingListRepository: ShoppingListRepository, messagesApi: MessagesApi)
     extends ViewController(messagesApi) {
 
