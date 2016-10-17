@@ -1,4 +1,4 @@
-@(form: Form[SessionController.Login])(implicit session: Session, messages: Messages)
+@(form: Form[SessionController.Login])(implicit request: RequestHeader, messages: Messages)
 
 @implicitFieldConstructor = @{ b3.vertical.fieldConstructor }
 

@@ -1,7 +1,7 @@
-@(shoppingLists: List[ShoppingList])(implicit flash: Flash, session: Session)
+@(shoppingLists: List[ShoppingList])(implicit request: RequestHeader)
 
 @main("Shopping Lists | Housekeeper") {
-    @flash.get("info").map { info =>
+    @request.flash.get("info").map { info =>
         <div class="alert alert-info">@info</div>
     }
 
