@@ -7,9 +7,13 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
 
   val userA = User("John Doe", "doe@example.com", "test_password")
 
+  def withUserRepo(f: UserRepository => Unit) = {
+    withDatabase(repos => f(repos.userRepository))
+  }
+
   "UserRepository" should {
 
-    "save new user" in {
+    "save new user" in withUserRepo { userRepository =>
       // when
       val Some(id) = userRepository.save(userA).futureValue.id
 
@@ -21,7 +25,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       found.password should be(userA.password)
     }
 
-    "return all users" in {
+    "return all users" in withUserRepo { userRepository =>
       // when
       userRepository.save(userA).futureValue
 
@@ -29,7 +33,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       users should have size (1)
     }
 
-    "find existing user by id" in {
+    "find existing user by id" in withUserRepo { userRepository =>
       // given
       val Some(userId) = userRepository.save(userA).futureValue.id
 
@@ -43,7 +47,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       found.password should be(userA.password)
     }
 
-    "find nonexistent user returns None" in {
+    "find nonexistent user returns None" in withUserRepo { userRepository =>
       // given
       userRepository.save(userA).futureValue
 
@@ -54,7 +58,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       notFound should be(None)
     }
 
-    "find existing user by email" in {
+    "find existing user by email" in withUserRepo { userRepository =>
       // given
       val Some(userId) = userRepository.save(userA).futureValue.id
 
@@ -68,7 +72,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       found.password should be(userA.password)
     }
 
-    "findByEmail returns None if user does not exist" in {
+    "findByEmail returns None if user does not exist" in withUserRepo { userRepository =>
       // given
       userRepository.save(userA).futureValue
 
@@ -79,7 +83,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       notFound should be(None)
     }
 
-    "update existing user" in {
+    "update existing user" in withUserRepo { userRepository =>
       // given
       val Some(userId) = userRepository.save(userA).futureValue.id
       val toUpdate = userA.copy(id = Some(userId), name = "New awesome name", email = "new@example.com", password = "newTestPassword")
@@ -95,7 +99,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       updated.id should be(Some(userId))
     }
 
-    "not update user without id" in {
+    "not update user without id" in withUserRepo { userRepository =>
       // given
       userRepository.save(userA).futureValue
       val toUpdate = userA.copy(name = "User without id", email = "newemail@example.com", password = "newTestPassword")
@@ -113,7 +117,7 @@ class UserRepositorySpec extends HousekeeperSpec with Database {
       updated.password should be(userA.password)
     }
 
-    "not update other users" in {
+    "not update other users" in withUserRepo { userRepository =>
       // given
       userRepository.save(userA).futureValue
       val toUpdate = userA.copy(name = "Nonexistent user", email = "nonexistent@example.com",

@@ -15,9 +15,13 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
     ShoppingList("Second awesome list", Some("Even more awesome list"))
   )
 
+  def withShoppingListRepo(f: ShoppingListRepository => Unit) = {
+    withDatabase(repos => f(repos.shoppingListRepository))
+  }
+
   "ShoppingListRepository" should {
 
-    "get all shopping lists" in {
+    "get all shopping lists" in withShoppingListRepo { shoppingListRepository =>
       // given
       val saveLists = shoppingLists.map(sl => shoppingListRepository.save(sl))
       Future.sequence(saveLists).futureValue
@@ -29,7 +33,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       allLists should have size (2)
     }
 
-    "get empty list if no shopping list was created" in {
+    "get empty list if no shopping list was created" in withShoppingListRepo { shoppingListRepository =>
       // when
       val shoppingLists = shoppingListRepository.all.futureValue
 
@@ -37,18 +41,18 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       shoppingLists should be(empty)
     }
 
-    "get shopping list and its items by id" in {
+    "get shopping list and its items by id" in withDatabase { repos =>
       // given
-      val Some(shoppingListId) = shoppingListRepository.save(shoppingListA).futureValue.id
+      val Some(shoppingListId) = repos.shoppingListRepository.save(shoppingListA).futureValue.id
 
       val items = Vector(
         ShoppingListItem("Macbook Pro 13'", 1, Some(1299.00)),
         ShoppingListItem("Brewdog 5am Saint Red Ale", 6, Some(5.0))
-      ).map(i => shoppingListItemRepository.add(shoppingListId, i))
+      ).map(i => repos.shoppingListItemRepository.add(shoppingListId, i))
       Future.sequence(items).futureValue
 
       // when
-      val Some(sld) = shoppingListRepository.find(shoppingListId).futureValue
+      val Some(sld) = repos.shoppingListRepository.find(shoppingListId).futureValue
 
       // then
       sld.shoppingList.id should be(Some(shoppingListId))
@@ -57,7 +61,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       sld.items should have size (2)
     }
 
-    "find None for nonexistent shopping list id" in {
+    "find None for nonexistent shopping list id" in withShoppingListRepo { shoppingListRepository =>
       // given
       val shoppingListId = 1
 
@@ -68,7 +72,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       notFound should be(None)
     }
 
-    "save newList shopping list" in {
+    "save newList shopping list" in withShoppingListRepo { shoppingListRepository =>
       // given
       val newShoppingList = ShoppingList("New awesome list", Some("The most awesome shopping list"))
 
@@ -84,7 +88,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       }
     }
 
-    "remove existing shopping list" in {
+    "remove existing shopping list" in withShoppingListRepo { shoppingListRepository =>
       // given
       val Some(id) = shoppingListRepository.save(shoppingListA).futureValue.id
 
@@ -96,7 +100,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       notFound should be(None)
     }
 
-    "remove nonexistent list keeps every list in database" in {
+    "remove nonexistent list keeps every list in database" in withShoppingListRepo { shoppingListRepository =>
       // given
       val saveLists = shoppingLists.map(sl => shoppingListRepository.save(sl))
       Future.sequence(saveLists).futureValue
@@ -109,7 +113,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       allLists should have size (2)
     }
 
-    "update existing shopping list in database" in {
+    "update existing shopping list in database" in withShoppingListRepo { shoppingListRepository =>
       // given
       val Some(id) = shoppingListRepository.save(shoppingListA).futureValue.id
       val toUpdate = ShoppingList("New test title", Some("Super duper updated description"), Some(id))
@@ -125,7 +129,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       }
     }
 
-    "update does not update other shopping lists" in {
+    "update does not update other shopping lists" in withShoppingListRepo { shoppingListRepository =>
       //given
       shoppingListRepository.save(shoppingListA).futureValue
       val toUpdate = ShoppingList("New title of nonexisting list", Some("New description of nonexisting list"), Some(Int.MaxValue))
@@ -142,7 +146,7 @@ class ShoppingListRepositorySpec extends HousekeeperSpec with Database {
       storedList.description should be(shoppingListA.description)
     }
 
-    "not update shopping list without id" in {
+    "not update shopping list without id" in withShoppingListRepo { shoppingListRepository =>
       // given
       shoppingListRepository.save(shoppingListA).futureValue
       val toUpdate = ShoppingList("New title of list without id", Some("New description of list without id"))
